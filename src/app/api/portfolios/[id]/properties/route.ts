@@ -1,0 +1,166 @@
+import { NextResponse } from 'next/server';
+import connectDB from '@/lib/db';
+import Property from '@/models/Property';
+import Portfolio from '@/models/Portfolio';
+import DynamicField from '@/models/DynamicField';
+import ApprovalRequest from '@/models/ApprovalRequest';
+import { requireAuth, createAuditLog } from '@/lib/server-utils';
+
+// GET all properties for a portfolio
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await requireAuth();
+    await connectDB();
+
+    const portfolio = await Portfolio.findById(params.id);
+    if (!portfolio) {
+      return NextResponse.json(
+        { error: 'Portfolio not found' },
+        { status: 404 }
+      );
+    }
+
+    const properties = await Property.find({ portfolioId: params.id })
+      .populate('createdBy', 'name email')
+      .populate('updatedBy', 'name email')
+      .sort({ createdAt: -1 });
+
+    // Populate fields and documents for each property
+    const propertiesWithDetails = await Promise.all(
+      properties.map(async (property: any) => {
+        const fields = await DynamicField.find({
+          propertyId: property._id,
+          status: user.role === 'admin' ? { $in: ['approved', 'pending', 'rejected'] } : 'approved',
+        });
+
+        return {
+          ...property.toObject(),
+          fieldsData: fields,
+        };
+      })
+    );
+
+    return NextResponse.json({ properties: propertiesWithDetails }, { status: 200 });
+  } catch (error: any) {
+    console.error('Get properties error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch properties' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST create new property
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await requireAuth();
+    await connectDB();
+
+    const portfolio = await Portfolio.findById(params.id);
+    if (!portfolio) {
+      return NextResponse.json(
+        { error: 'Portfolio not found' },
+        { status: 404 }
+      );
+    }
+
+    const body = await request.json();
+    const { name, address, status, propertyType } = body;
+
+    if (!name || !address) {
+      return NextResponse.json(
+        { error: 'Name and address are required' },
+        { status: 400 }
+      );
+    }
+
+    // Create property
+    const property = await Property.create({
+      portfolioId: params.id,
+      name,
+      address,
+      propertyType: propertyType || 'residential',
+      status: status || 'active',
+      fields: [],
+      documents: [],
+      createdBy: user.id,
+      updatedBy: user.id,
+    });
+
+    // Create default fields
+    const defaultFields = [
+      { name: 'Property Value', category: 'value', type: 'currency', value: 0 },
+      { name: 'Monthly Rent', category: 'revenue', type: 'currency', value: 0, frequency: 'monthly' },
+      { name: 'Utilities', category: 'expense', type: 'currency', value: 0, frequency: 'monthly' },
+      { name: 'Furniture Asset Value', category: 'asset', type: 'currency', value: 0 },
+    ];
+
+    const fieldPromises = defaultFields.map((field) =>
+      DynamicField.create({
+        portfolioId: params.id,
+        propertyId: property._id,
+        name: field.name,
+        category: field.category,
+        type: field.type,
+        frequency: field.frequency || 'one-time',
+        currency: 'AUD',
+        value: field.value,
+        status: user.role === 'admin' ? 'approved' : 'pending',
+        createdBy: user.id,
+        approvedBy: user.role === 'admin' ? user.id : undefined,
+      })
+    );
+
+    const createdFields = await Promise.all(fieldPromises);
+    property.fields = createdFields.map((f: any) => f._id);
+    await property.save();
+
+    // If created by manager, create approval request
+    if (user.role === 'manager') {
+      await ApprovalRequest.create({
+        type: 'property',
+        refId: property._id,
+        propertyId: property._id,
+        portfolioId: params.id,
+        action: 'create',
+        submittedBy: user.id,
+        status: 'pending',
+        proposedData: property.toObject(),
+      });
+    }
+
+    await createAuditLog({
+      userId: user.id,
+      action: 'Created property',
+      targetType: 'property',
+      targetId: property._id.toString(),
+      changes: {
+        after: {
+          name: property.name,
+          address: property.address,
+        },
+      },
+    });
+
+    const populatedProperty = await Property.findById(property._id)
+      .populate('createdBy', 'name email')
+      .populate('updatedBy', 'name email');
+
+    return NextResponse.json(
+      { property: populatedProperty },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error('Create property error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to create property' },
+      { status: 500 }
+    );
+  }
+}
