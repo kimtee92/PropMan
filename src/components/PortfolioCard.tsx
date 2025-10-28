@@ -13,6 +13,7 @@ interface Portfolio {
   description?: string;
   managers?: any[];
   owners?: any[];
+  viewers?: any[];
 }
 
 interface PortfolioCardProps {
@@ -23,6 +24,21 @@ interface PortfolioCardProps {
 }
 
 export function PortfolioCard({ portfolio, onEdit, onDelete, isAdmin }: PortfolioCardProps) {
+  // Calculate unique member count
+  const allMembers = [
+    ...(portfolio.owners || []),
+    ...(portfolio.managers || []),
+    ...(portfolio.viewers || [])
+  ];
+  
+  // Get unique users by ID
+  const uniqueMemberIds = new Set(
+    allMembers.map((member: any) => 
+      typeof member === 'string' ? member : member._id?.toString() || member.toString()
+    )
+  );
+  const memberCount = uniqueMemberIds.size;
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -46,7 +62,7 @@ export function PortfolioCard({ portfolio, onEdit, onDelete, isAdmin }: Portfoli
           <div className="flex items-center space-x-4 text-sm text-gray-500">
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-1" />
-              <span>{(portfolio.managers?.length || 0) + (portfolio.owners?.length || 0)} members</span>
+              <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
             </div>
           </div>
           <div className="flex space-x-2">

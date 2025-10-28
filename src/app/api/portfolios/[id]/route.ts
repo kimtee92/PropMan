@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import Portfolio from '@/models/Portfolio';
 import Property from '@/models/Property';
 import { requireAuth, createAuditLog } from '@/lib/server-utils';
+import mongoose from 'mongoose';
 
 // GET single portfolio
 export async function GET(
@@ -78,6 +79,17 @@ export async function PUT(
 
     const body = await request.json();
     const oldData = { ...portfolio.toObject() };
+
+    // Convert user IDs to ObjectIds if present
+    if (body.owners) {
+      body.owners = body.owners.map((id: string) => new mongoose.Types.ObjectId(id));
+    }
+    if (body.managers) {
+      body.managers = body.managers.map((id: string) => new mongoose.Types.ObjectId(id));
+    }
+    if (body.viewers) {
+      body.viewers = body.viewers.map((id: string) => new mongoose.Types.ObjectId(id));
+    }
 
     Object.assign(portfolio, body);
     await portfolio.save();

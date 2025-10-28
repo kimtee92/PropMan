@@ -79,9 +79,9 @@ export async function POST(request: Request) {
       name,
       entity,
       description,
-      owners: [user.id, ...(owners || [])],
-      managers: managers || [],
-      viewers: viewers || [],
+      owners: [new mongoose.Types.ObjectId(user.id), ...(owners || []).map((id: string) => new mongoose.Types.ObjectId(id))],
+      managers: (managers || []).map((id: string) => new mongoose.Types.ObjectId(id)),
+      viewers: (viewers || []).map((id: string) => new mongoose.Types.ObjectId(id)),
       defaultFields: [],
     });
 
