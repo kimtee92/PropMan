@@ -1,0 +1,55 @@
+# Quick Deployment Guide
+
+## Deploy to Vercel in 5 Steps
+
+### 1. Push to GitHub ✅
+```bash
+git add .
+git commit -m "Ready for deployment"
+git push
+```
+
+### 2. Connect to Vercel
+- Go to https://vercel.com/new
+- Click "Import" on your `PropMan` repository
+- Click "Deploy" (we'll add env vars next)
+
+### 3. Add Environment Variables
+Go to **Settings** → **Environment Variables** and add:
+
+```env
+MONGODB_URI=your-mongodb-connection-string
+NEXTAUTH_SECRET=your-secret-key-minimum-32-chars
+NEXTAUTH_URL=https://your-app.vercel.app
+UPLOADTHING_SECRET=your-uploadthing-secret
+UPLOADTHING_APP_ID=your-uploadthing-app-id
+NODE_ENV=production
+```
+
+### 4. Redeploy
+- Go to **Deployments** tab
+- Click "Redeploy" on the latest deployment
+
+### 5. Seed the Database (One-Time)
+```bash
+# Set your production MongoDB URI
+$env:MONGODB_URI="your-production-mongodb-uri"
+
+# Run the production seed script
+npm run seed:prod
+```
+
+## That's It! 🎉
+
+Your app should now be live at `https://your-app.vercel.app`
+
+Login with:
+- **Admin**: admin@propman.com / admin123
+- **Manager**: manager@propman.com / manager123
+- **Viewer**: viewer@propman.com / viewer123
+
+---
+
+## Need Help?
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions and troubleshooting.
