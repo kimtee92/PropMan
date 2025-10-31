@@ -6,6 +6,7 @@ import DynamicField from '@/models/DynamicField';
 import Document from '@/models/Document';
 import ApprovalRequest from '@/models/ApprovalRequest';
 import { requireAuth, createAuditLog } from '@/lib/server-utils';
+import { deleteFileFromUploadThing, deleteFilesFromUploadThing } from '@/lib/uploadthing-delete';
 
 // GET single property
 export async function GET(
@@ -173,6 +174,11 @@ export async function PUT(
     // Owner/Admin: Update directly
     const oldData = { ...property.toObject() };
 
+    // If imageUrl is being updated and there's an old image, delete the old one from UploadThing
+    if (body.imageUrl && property.imageUrl && body.imageUrl !== property.imageUrl) {
+      await deleteFileFromUploadThing(property.imageUrl);
+    }
+
     Object.assign(property, {
       ...body,
       updatedBy: user.id,
@@ -292,7 +298,23 @@ export async function DELETE(
     }
 
     // Owner/Admin: Delete directly
-    // Delete related data
+    // Delete related data and files from UploadThing
+    
+    // Get all documents to delete their files from UploadThing
+    const documents = await Document.find({ propertyId: params.propertyId });
+    const documentUrls = documents.map(doc => doc.url).filter(url => url);
+    
+    // Delete document files from UploadThing
+    if (documentUrls.length > 0) {
+      await deleteFilesFromUploadThing(documentUrls);
+    }
+    
+    // Delete property image from UploadThing if it exists
+    if (property.imageUrl) {
+      await deleteFileFromUploadThing(property.imageUrl);
+    }
+    
+    // Delete database records
     await DynamicField.deleteMany({ propertyId: params.propertyId });
     await Document.deleteMany({ propertyId: params.propertyId });
 

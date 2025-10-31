@@ -5,6 +5,7 @@ import DynamicField from '@/models/DynamicField';
 import Document from '@/models/Document';
 import Property from '@/models/Property';
 import { requireAuth, requireRole, createAuditLog } from '@/lib/server-utils';
+import { deleteFileFromUploadThing } from '@/lib/uploadthing-delete';
 
 // GET all pending approvals (admin only)
 export async function GET(request: Request) {
@@ -95,6 +96,10 @@ export async function POST(request: Request) {
             document.approvedBy = user.id as any;
             await document.save();
           } else if (approval.action === 'delete') {
+            // Delete file from UploadThing before deleting from database
+            if (document.url) {
+              await deleteFileFromUploadThing(document.url);
+            }
             await Document.findByIdAndDelete(approval.refId);
           }
         }
@@ -112,6 +117,11 @@ export async function POST(request: Request) {
         if (approval.type === 'field') {
           await DynamicField.findByIdAndUpdate(approval.refId, { status: 'rejected' });
         } else if (approval.type === 'document') {
+          // When rejecting a document creation, delete the uploaded file from UploadThing
+          const document = await Document.findById(approval.refId);
+          if (document && document.url) {
+            await deleteFileFromUploadThing(document.url);
+          }
           await Document.findByIdAndUpdate(approval.refId, { status: 'rejected' });
         }
       }

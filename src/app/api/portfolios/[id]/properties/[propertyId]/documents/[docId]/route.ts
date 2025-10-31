@@ -5,6 +5,7 @@ import connectDB from '@/lib/db';
 import Portfolio from '@/models/Portfolio';
 import Document from '@/models/Document';
 import ApprovalRequest from '@/models/ApprovalRequest';
+import { deleteFileFromUploadThing } from '@/lib/uploadthing-delete';
 
 export async function DELETE(
   req: NextRequest,
@@ -42,6 +43,11 @@ export async function DELETE(
 
     // If user is owner or admin, delete document directly
     if (isOwner || isAdmin) {
+      // Delete file from UploadThing before deleting from database
+      if (document.url) {
+        await deleteFileFromUploadThing(document.url);
+      }
+      
       await Document.findByIdAndDelete(params.docId);
       return NextResponse.json({ message: 'Document deleted successfully' });
     }
