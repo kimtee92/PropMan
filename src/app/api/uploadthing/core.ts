@@ -12,7 +12,7 @@ export const ourFileRouter = {
     'application/vnd.ms-excel': { maxFileSize: '4MB', maxFileCount: 5 },
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { maxFileSize: '4MB', maxFileCount: 5 },
   })
-    .middleware(async ({ req }) => {
+    .middleware(async () => {
       const session = await getServerSession(authOptions);
       
       if (!session?.user) {
@@ -31,7 +31,7 @@ export const ourFileRouter = {
   propertyImage: f({
     image: { maxFileSize: '4MB', maxFileCount: 1 },
   })
-    .middleware(async ({ req }) => {
+    .middleware(async () => {
       const session = await getServerSession(authOptions);
       
       if (!session?.user) {
