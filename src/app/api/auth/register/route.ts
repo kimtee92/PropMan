@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import AuditLog from '@/models/AuditLog';
+import { isValidEmail, isStrongPassword, sanitizeErrorMessage } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
@@ -17,18 +18,18 @@ export async function POST(request: Request) {
     }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
       );
     }
 
-    // Password validation
-    if (password.length < 8) {
+    // Password strength validation
+    const passwordCheck = isStrongPassword(password);
+    if (!passwordCheck.valid) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters' },
+        { error: passwordCheck.message },
         { status: 400 }
       );
     }
@@ -86,8 +87,9 @@ export async function POST(request: Request) {
     );
   } catch (error: any) {
     console.error('Registration error:', error);
+    const errorMessage = sanitizeErrorMessage(error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

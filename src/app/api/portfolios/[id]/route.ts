@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import Portfolio from '@/models/Portfolio';
 import Property from '@/models/Property';
 import { requireAuth, createAuditLog } from '@/lib/server-utils';
+import { isValidObjectId, sanitizeErrorMessage } from '@/lib/security';
 import mongoose from 'mongoose';
 
 // GET single portfolio
@@ -12,6 +13,15 @@ export async function GET(
 ) {
   try {
     const user = await requireAuth();
+    
+    // Validate ObjectId format
+    if (!isValidObjectId(params.id)) {
+      return NextResponse.json(
+        { error: 'Invalid portfolio ID format' },
+        { status: 400 }
+      );
+    }
+    
     await connectDB();
 
     const portfolio = await Portfolio.findById(params.id)
@@ -43,8 +53,9 @@ export async function GET(
     return NextResponse.json({ portfolio }, { status: 200 });
   } catch (error: any) {
     console.error('Get portfolio error:', error);
+    const errorMessage = sanitizeErrorMessage(error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch portfolio' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -58,6 +69,13 @@ export async function PUT(
   try {
     const user = await requireAuth();
     
+    // Validate ObjectId format
+    if (!isValidObjectId(params.id)) {
+      return NextResponse.json(
+        { error: 'Invalid portfolio ID format' },
+        { status: 400 }
+      );
+    }
     await connectDB();
 
     const portfolio = await Portfolio.findById(params.id);
