@@ -93,11 +93,13 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-gray-600">
-            <p>Demo accounts:</p>
-            <p className="text-xs mt-1">Admin: admin@propman.com / admin123</p>
-            <p className="text-xs">Manager: manager@propman.com / manager123</p>
-          </div>
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="mt-4 text-center text-sm text-gray-600">
+              <p>Demo accounts:</p>
+              <p className="text-xs mt-1">Admin: admin@propman.com / admin123</p>
+              <p className="text-xs">Manager: manager@propman.com / manager123</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
