@@ -25,22 +25,28 @@ export const ourFileRouter = {
       portfolioId: z.string().optional().default('default'), 
       propertyId: z.string().optional().default('default'),
     }))
-    .middleware(async ({ req, input }) => {
+    .middleware(async ({ req, input, files }) => {
       const session = await getServerSession(authOptions);
       
       if (!session?.user) {
         throw new Error('Unauthorized');
       }
 
-      // Define the folder path structure
-      const folderPath = `Portfolio_${input.portfolioId}/Property_${input.propertyId}/documents`;
+      // Create custom file keys with folder structure
+      const customKeys = files.map((file) => {
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        const fileExt = file.name.split('.').pop();
+        const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        return `Portfolio_${input.portfolioId}/Property_${input.propertyId}/documents/${timestamp}_${randomStr}_${cleanFileName}`;
+      });
 
       return { 
         userId: session.user.id, 
         userRole: session.user.role,
         portfolioId: input.portfolioId,
         propertyId: input.propertyId,
-        folderPath,
+        [Symbol.for('uploadthing.custom-id')]: customKeys,
       };
     })
     .onUploadComplete(async ({ metadata, file }) => {
@@ -48,12 +54,12 @@ export const ourFileRouter = {
       console.log('   User:', metadata.userId);
       console.log('   File:', file.name);
       console.log('   URL:', file.url);
-      console.log('   Path: Portfolio', metadata.portfolioId, '> Property', metadata.propertyId, '> documents');
+      console.log('   Key:', file.key);
+      console.log('   Organized: Portfolio', metadata.portfolioId, '> Property', metadata.propertyId, '> documents');
       
       return { 
         uploadedBy: metadata.userId, 
         url: file.url,
-        folderPath: metadata.folderPath,
       };
     }),
   
@@ -64,22 +70,28 @@ export const ourFileRouter = {
       portfolioId: z.string().optional().default('default'), 
       propertyId: z.string().optional().default('default'),
     }))
-    .middleware(async ({ req, input }) => {
+    .middleware(async ({ req, input, files }) => {
       const session = await getServerSession(authOptions);
       
       if (!session?.user) {
         throw new Error('Unauthorized');
       }
 
-      // Define the folder path structure
-      const folderPath = `Portfolio_${input.portfolioId}/Property_${input.propertyId}/images`;
+      // Create custom file keys with folder structure
+      const customKeys = files.map((file) => {
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        const fileExt = file.name.split('.').pop();
+        const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        return `Portfolio_${input.portfolioId}/Property_${input.propertyId}/images/${timestamp}_${randomStr}_${cleanFileName}`;
+      });
 
       return { 
         userId: session.user.id, 
         userRole: session.user.role,
         portfolioId: input.portfolioId,
         propertyId: input.propertyId,
-        folderPath,
+        [Symbol.for('uploadthing.custom-id')]: customKeys,
       };
     })
     .onUploadComplete(async ({ metadata, file }) => {
@@ -87,12 +99,12 @@ export const ourFileRouter = {
       console.log('   User:', metadata.userId);
       console.log('   File:', file.name);
       console.log('   URL:', file.url);
-      console.log('   Path: Portfolio', metadata.portfolioId, '> Property', metadata.propertyId, '> images');
+      console.log('   Key:', file.key);
+      console.log('   Organized: Portfolio', metadata.portfolioId, '> Property', metadata.propertyId, '> images');
       
       return { 
         uploadedBy: metadata.userId, 
         url: file.url,
-        folderPath: metadata.folderPath,
       };
     }),
 } satisfies FileRouter;
