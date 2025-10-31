@@ -20,7 +20,13 @@ export default async function DashboardPage() {
   // Fetch real data
   await connectDB();
   
-  const portfolioCount = await Portfolio.countDocuments();
+  // Count portfolios based on user role
+  const portfolioCount = session.user.role === 'admin'
+    ? await Portfolio.countDocuments()
+    : await Portfolio.countDocuments({ 
+        managers: session.user.id 
+      });
+  
   const pendingApprovalsCount = session.user.role === 'admin' 
     ? await ApprovalRequest.countDocuments({ status: 'pending' })
     : 0;

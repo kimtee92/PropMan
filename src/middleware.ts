@@ -38,6 +38,13 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = request.nextUrl;
 
+  // Allow NextAuth API routes without authentication
+  if (pathname.startsWith('/api/auth/')) {
+    const response = NextResponse.next();
+    addSecurityHeaders(response);
+    return response;
+  }
+
   // Rate limiting for API routes
   if (pathname.startsWith('/api/')) {
     const ip = request.ip || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';

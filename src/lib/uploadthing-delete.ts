@@ -1,6 +1,8 @@
 import { UTApi } from 'uploadthing/server';
 
-const utapi = new UTApi({ token: process.env.UPLOADTHING_SECRET });
+const utapi = new UTApi({ 
+  token: process.env.UPLOADTHING_TOKEN || process.env.UPLOADTHING_SECRET 
+});
 
 /**
  * Extract the file key from an UploadThing URL
