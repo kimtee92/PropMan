@@ -245,8 +245,11 @@ export default function PropertyDetailPage() {
     setUploading(true);
 
     try {
-      // First, upload the file to UploadThing
-      const uploadResult = await startUpload([documentFormData.file]);
+      // First, upload the file to UploadThing with folder structure
+      const uploadResult = await startUpload([documentFormData.file], {
+        portfolioId: params.id as string,
+        propertyId: params.propertyId as string,
+      });
       
       if (!uploadResult || uploadResult.length === 0) {
         throw new Error('File upload failed');
@@ -388,8 +391,11 @@ export default function PropertyDetailPage() {
     setUploadingImage(true);
 
     try {
-      // Upload image to UploadThing
-      const uploadResult = await startImageUpload([selectedImage]);
+      // Upload image to UploadThing with folder structure
+      const uploadResult = await startImageUpload([selectedImage], {
+        portfolioId: params.id as string,
+        propertyId: params.propertyId as string,
+      });
       
       if (!uploadResult || uploadResult.length === 0) {
         throw new Error('Image upload failed');
