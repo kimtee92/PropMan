@@ -70,11 +70,6 @@ A modern property and portfolio management web application with role-based acces
 
    Open [http://localhost:3000](http://localhost:3000)
 
-### Demo Accounts
-- **Admin**: admin@propman.com / admin123
-- **Manager**: manager@propman.com / manager123
-- **Viewer**: viewer@propman.com / viewer123
-
 ## 👥 User Roles
 
 ### Admin

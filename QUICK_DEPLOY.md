@@ -43,11 +43,6 @@ npm run seed:prod
 
 Your app should now be live at `https://your-app.vercel.app`
 
-Login with:
-- **Admin**: admin@propman.com / admin123
-- **Manager**: manager@propman.com / manager123
-- **Viewer**: viewer@propman.com / viewer123
-
 ---
 
 ## Need Help?

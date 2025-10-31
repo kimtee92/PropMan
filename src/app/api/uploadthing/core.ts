@@ -23,9 +23,9 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log('Upload complete for userId:', metadata.userId);
-      console.log('File URL:', file.url);
+      console.log('File URL:', file.ufsUrl);
       
-      return { uploadedBy: metadata.userId, url: file.url };
+      return { uploadedBy: metadata.userId, url: file.ufsUrl };
     }),
   
   propertyImage: f({
@@ -42,9 +42,9 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log('Property image upload complete for userId:', metadata.userId);
-      console.log('Image URL:', file.url);
+      console.log('Image URL:', file.ufsUrl);
       
-      return { uploadedBy: metadata.userId, url: file.url };
+      return { uploadedBy: metadata.userId, url: file.ufsUrl };
     }),
 } satisfies FileRouter;
 
