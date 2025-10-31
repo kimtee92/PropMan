@@ -42,8 +42,12 @@ export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
-  const { startUpload } = useUploadThing('propertyDocument');
-  const { startUpload: startImageUpload } = useUploadThing('propertyImage');
+  const { startUpload } = useUploadThing('propertyDocument', {
+    skipPolling: true,
+  });
+  const { startUpload: startImageUpload } = useUploadThing('propertyImage', {
+    skipPolling: true,
+  });
   const [property, setProperty] = useState<any>(null);
   const [fields, setFields] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
@@ -392,10 +396,18 @@ export default function PropertyDetailPage() {
 
     try {
       // Upload image to UploadThing with folder structure
-      const uploadResult = await startImageUpload([selectedImage], {
-        portfolioId: params.id as string,
-        propertyId: params.propertyId as string,
+      console.log('Uploading image with params:', {
+        portfolioId: params.id,
+        propertyId: params.propertyId,
       });
+      
+      const uploadResult = await startImageUpload(
+        [selectedImage], 
+        {
+          portfolioId: params.id as string,
+          propertyId: params.propertyId as string,
+        }
+      );
       
       if (!uploadResult || uploadResult.length === 0) {
         throw new Error('Image upload failed');

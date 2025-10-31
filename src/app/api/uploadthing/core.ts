@@ -22,8 +22,8 @@ export const ourFileRouter = {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { maxFileSize: '4MB', maxFileCount: 5 },
   })
     .input(z.object({ 
-      portfolioId: z.string(), 
-      propertyId: z.string() 
+      portfolioId: z.string().optional().default('default'), 
+      propertyId: z.string().optional().default('default'),
     }))
     .middleware(async ({ req, input }) => {
       const session = await getServerSession(authOptions);
@@ -61,8 +61,8 @@ export const ourFileRouter = {
     image: { maxFileSize: '4MB', maxFileCount: 1 },
   })
     .input(z.object({ 
-      portfolioId: z.string(), 
-      propertyId: z.string() 
+      portfolioId: z.string().optional().default('default'), 
+      propertyId: z.string().optional().default('default'),
     }))
     .middleware(async ({ req, input }) => {
       const session = await getServerSession(authOptions);
