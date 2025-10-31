@@ -122,6 +122,18 @@ export default async function DashboardPage() {
               <li>• Review and approve manager submissions</li>
             )}
           </ul>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-xs font-semibold text-gray-700 mb-2">Demo Accounts:</p>
+              <ul className="space-y-1 text-xs text-gray-600">
+                <li>• Admin: admin@propman.com / admin123</li>
+                <li>• Manager: manager@propman.com / manager123</li>
+              </ul>
+              <p className="text-xs text-orange-600 mt-2 italic">
+                * Only visible in development mode
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

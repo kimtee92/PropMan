@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { Button } from './ui/button';
-import { Building2, LogOut, CheckSquare, Activity, LayoutDashboard } from 'lucide-react';
+import { Building2, LogOut, CheckSquare, Activity, LayoutDashboard, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
@@ -16,6 +16,7 @@ export function Navbar() {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Portfolios', href: '/portfolios', icon: Building2 },
     ...(session?.user?.role === 'admin' ? [
+      { name: 'Users', href: '/users', icon: Users },
       { name: 'Approvals', href: '/approvals', icon: CheckSquare },
       { name: 'Audit Log', href: '/audit-log', icon: Activity },
     ] : []),

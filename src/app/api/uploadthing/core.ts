@@ -30,6 +30,25 @@ export const ourFileRouter = {
       
       return { uploadedBy: metadata.userId, url: file.url };
     }),
+  
+  propertyImage: f({
+    image: { maxFileSize: '4MB', maxFileCount: 1 },
+  })
+    .middleware(async ({ req }) => {
+      const session = await getServerSession(authOptions);
+      
+      if (!session?.user) {
+        throw new Error('Unauthorized');
+      }
+
+      return { userId: session.user.id, userRole: session.user.role };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Property image upload complete for userId:', metadata.userId);
+      console.log('Image URL:', file.url);
+      
+      return { uploadedBy: metadata.userId, url: file.url };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

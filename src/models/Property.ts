@@ -7,6 +7,7 @@ export interface IProperty extends Document {
   address: string;
   propertyType: 'residential' | 'commercial' | 'industrial' | 'land' | 'mixed';
   status: 'active' | 'pending' | 'sold' | 'archived';
+  imageUrl?: string;
   fields: mongoose.Types.ObjectId[];
   documents: mongoose.Types.ObjectId[];
   createdBy: mongoose.Types.ObjectId;
@@ -42,6 +43,10 @@ const PropertySchema: Schema = new Schema({
     enum: ['active', 'pending', 'sold', 'archived'],
     default: 'active',
     required: true,
+  },
+  imageUrl: {
+    type: String,
+    trim: true,
   },
   fields: [{
     type: Schema.Types.ObjectId,

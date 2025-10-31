@@ -39,7 +39,6 @@ export default function PortfolioDetailPage() {
   const [creating, setCreating] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'manager' | 'viewer'>('manager');
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -126,13 +125,29 @@ export default function PortfolioDetailPage() {
     setCreating(true);
 
     try {
+      // Find the selected user to get their role
+      const user = users.find((u) => u._id === selectedUser);
+      if (!user) {
+        alert('User not found');
+        setCreating(false);
+        return;
+      }
+
       const updatedPortfolio = { ...portfolio };
       
-      if (selectedRole === 'manager') {
+      // Add user to the appropriate array based on their role
+      if (user.role === 'admin') {
+        // Admins become owners
+        if (!updatedPortfolio.owners.find((o: any) => o._id === selectedUser)) {
+          updatedPortfolio.owners.push(selectedUser);
+        }
+      } else if (user.role === 'manager') {
+        // Managers go to managers array
         if (!updatedPortfolio.managers.find((m: any) => m._id === selectedUser)) {
           updatedPortfolio.managers.push(selectedUser);
         }
-      } else {
+      } else if (user.role === 'viewer') {
+        // Viewers go to viewers array
         if (!updatedPortfolio.viewers.find((v: any) => v._id === selectedUser)) {
           updatedPortfolio.viewers.push(selectedUser);
         }
@@ -142,6 +157,7 @@ export default function PortfolioDetailPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          owners: updatedPortfolio.owners.map((o: any) => o._id || o),
           managers: updatedPortfolio.managers.map((m: any) => m._id || m),
           viewers: updatedPortfolio.viewers.map((v: any) => v._id || v),
         }),
@@ -150,11 +166,15 @@ export default function PortfolioDetailPage() {
       if (res.ok) {
         setUserDialogOpen(false);
         setSelectedUser('');
-        setSelectedRole('manager');
         fetchPortfolio();
+        alert(`${user.name} added successfully as ${user.role}!`);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to add user');
       }
     } catch (error) {
       console.error('Error adding user:', error);
+      alert('An error occurred while adding the user');
     } finally {
       setCreating(false);
     }
@@ -368,9 +388,9 @@ export default function PortfolioDetailPage() {
         <DialogContent>
           <form onSubmit={handleAddUser}>
             <DialogHeader>
-              <DialogTitle>Add Users to Portfolio</DialogTitle>
+              <DialogTitle>Add User to Portfolio</DialogTitle>
               <DialogDescription>
-                Assign managers or viewers to this portfolio.
+                Users will be assigned based on their existing role (Admin → Owner, Manager → Manager, Viewer → Viewer).
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -391,26 +411,14 @@ export default function PortfolioDetailPage() {
                       })
                       .map((user: any) => (
                         <SelectItem key={user._id} value={user._id}>
-                          {user.name} ({user.email}) - {user.role}
+                          {user.name} ({user.email}) - <strong>{user.role.toUpperCase()}</strong>
                         </SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="role">Role</Label>
-                <Select
-                  value={selectedRole}
-                  onValueChange={(value: 'manager' | 'viewer') => setSelectedRole(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manager">Manager (Can edit properties)</SelectItem>
-                    <SelectItem value="viewer">Viewer (Read-only access)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  User will be added with their system role
+                </p>
               </div>
 
               {/* Current Users Display */}

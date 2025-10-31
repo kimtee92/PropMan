@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Home, MapPin, DollarSign } from 'lucide-react';
+import { Home, MapPin, DollarSign, ImageIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface Property {
@@ -12,6 +13,7 @@ interface Property {
   name: string;
   address: string;
   status: 'active' | 'sold' | 'under renovation';
+  imageUrl?: string;
   fieldsData?: any[];
 }
 
@@ -32,7 +34,23 @@ export function PropertyCard({ property, portfolioId }: PropertyCardProps) {
   );
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow overflow-hidden">
+      {property.imageUrl && (
+        <div className="relative h-48 w-full bg-gray-100">
+          <Image
+            src={property.imageUrl}
+            alt={property.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        </div>
+      )}
+      {!property.imageUrl && (
+        <div className="relative h-48 w-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+          <ImageIcon className="h-16 w-16 text-blue-300" />
+        </div>
+      )}
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex items-center space-x-3">

@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Edit, FileText, DollarSign, TrendingUp, Upload, Trash2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, DollarSign, TrendingUp, Upload, Trash2, Plus, X, ImageIcon, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useUploadThing } from '@/lib/uploadthing';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -41,17 +43,24 @@ export default function PropertyDetailPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const { startUpload } = useUploadThing('propertyDocument');
+  const { startUpload: startImageUpload } = useUploadThing('propertyImage');
   const [property, setProperty] = useState<any>(null);
   const [fields, setFields] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [fieldDialogOpen, setFieldDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
   const [fieldFormData, setFieldFormData] = useState({
     fieldName: '',
     fieldType: 'value' as 'value' | 'revenue' | 'expense' | 'asset',
@@ -75,6 +84,7 @@ export default function PropertyDetailPage() {
     if (params.id && params.propertyId) {
       fetchProperty();
       fetchDocuments();
+      fetchNotes();
     }
   }, [params.id, params.propertyId]);
 
@@ -87,6 +97,18 @@ export default function PropertyDetailPage() {
       }
     } catch (error) {
       console.error('Error fetching documents:', error);
+    }
+  };
+
+  const fetchNotes = async () => {
+    try {
+      const res = await fetch(`/api/portfolios/${params.id}/properties/${params.propertyId}/notes`);
+      if (res.ok) {
+        const data = await res.json();
+        setNotes(data.notes || []);
+      }
+    } catch (error) {
+      console.error('Error fetching notes:', error);
     }
   };
 
@@ -305,6 +327,102 @@ export default function PropertyDetailPage() {
     }
   };
 
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteContent.trim()) {
+      alert('Please enter a note');
+      return;
+    }
+
+    setSavingNote(true);
+
+    try {
+      const res = await fetch(`/api/portfolios/${params.id}/properties/${params.propertyId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newNoteContent }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setNewNoteContent('');
+        fetchNotes();
+      } else {
+        alert(data.error || 'Failed to add note');
+      }
+    } catch (error) {
+      console.error('Error adding note:', error);
+      alert('An error occurred while adding the note');
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+
+    try {
+      const res = await fetch(`/api/portfolios/${params.id}/properties/${params.propertyId}/notes/${noteId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        fetchNotes();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete note');
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    }
+  };
+
+  const handleImageUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedImage) {
+      alert('Please select an image');
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      // Upload image to UploadThing
+      const uploadResult = await startImageUpload([selectedImage]);
+      
+      if (!uploadResult || uploadResult.length === 0) {
+        throw new Error('Image upload failed');
+      }
+
+      const uploadedImage = uploadResult[0];
+
+      // Update property with image URL
+      const res = await fetch(`/api/portfolios/${params.id}/properties/${params.propertyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: uploadedImage.url,
+        }),
+      });
+
+      if (res.ok) {
+        setImageDialogOpen(false);
+        setSelectedImage(null);
+        alert('Property image updated successfully!');
+        fetchProperty();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to update property image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('An error occurred while uploading the image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -361,6 +479,44 @@ export default function PropertyDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Property Image Banner */}
+      {property.imageUrl && (
+        <div className="relative h-64 w-full rounded-lg overflow-hidden">
+          <Image
+            src={property.imageUrl}
+            alt={property.name}
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+          />
+          {canManage && (
+            <div className="absolute top-4 right-4">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setImageDialogOpen(true)}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Change Image
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+      {!property.imageUrl && canManage && (
+        <div className="relative h-64 w-full rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center border-2 border-dashed border-blue-300">
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => setImageDialogOpen(true)}
+          >
+            <ImageIcon className="h-5 w-5 mr-2" />
+            Upload Property Image
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <Link href={`/portfolio/${params.id}`}>
           <Button variant="ghost" size="icon">
@@ -703,6 +859,90 @@ export default function PropertyDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Notes & Correspondence Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-blue-600" />
+                Notes & Correspondence
+              </CardTitle>
+              <CardDescription>Property notes and communication history with timestamps</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Add Note Form */}
+          <form onSubmit={handleAddNote} className="mb-6">
+            <div className="space-y-2">
+              <Label htmlFor="newNote">Add a Note</Label>
+              <Textarea
+                id="newNote"
+                placeholder="Enter your note or correspondence here..."
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+              <Button 
+                type="submit" 
+                size="sm" 
+                disabled={savingNote || !newNoteContent.trim()}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {savingNote ? 'Adding...' : 'Add Note'}
+              </Button>
+            </div>
+          </form>
+
+          {/* Notes List */}
+          {notes.length === 0 ? (
+            <p className="text-sm text-gray-500">No notes added yet</p>
+          ) : (
+            <div className="space-y-4">
+              {notes.map((note: any) => (
+                <div key={note._id} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm text-gray-900">
+                          {note.createdBy?.name || 'Unknown User'}
+                        </p>
+                        <span className="text-xs text-gray-500">
+                          {note.createdBy?.email}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(note.createdAt).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
+                      </p>
+                    </div>
+                    {(session?.user?.id === note.createdBy?._id || session?.user?.role === 'admin') && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleDeleteNote(note._id)}
+                      >
+                        <Trash2 className="h-3 w-3 text-red-600" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
@@ -955,6 +1195,57 @@ export default function PropertyDetailPage() {
               {uploading ? 'Uploading...' : 'Upload'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Upload Dialog */}
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Property Image</DialogTitle>
+            <DialogDescription>
+              Upload an image to display as the property thumbnail and header image.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleImageUpload}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="propertyImage">Select Image</Label>
+                <Input
+                  id="propertyImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setSelectedImage(file);
+                    }
+                  }}
+                  required
+                />
+                {selectedImage && (
+                  <p className="text-sm text-gray-500">
+                    Selected: {selectedImage.name}
+                  </p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setImageDialogOpen(false);
+                  setSelectedImage(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={uploadingImage || !selectedImage}>
+                {uploadingImage ? 'Uploading...' : 'Upload'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
