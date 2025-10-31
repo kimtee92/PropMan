@@ -23,8 +23,9 @@ NEXTAUTH_SECRET=your-secret-key-minimum-32-chars
 NEXTAUTH_URL=https://your-app.vercel.app
 UPLOADTHING_SECRET=your-uploadthing-secret
 UPLOADTHING_APP_ID=your-uploadthing-app-id
-NODE_ENV=production
 ```
+
+> **Note:** Don't add `NODE_ENV` - Vercel sets this automatically!
 
 ### 4. Redeploy
 - Go to **Deployments** tab
