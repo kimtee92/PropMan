@@ -21,7 +21,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
-    "@uploadthing/react": "^6.0.0",
+    "@uploadthing/react": "^7.3.3",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
@@ -38,7 +38,7 @@
     "resend": "^2.0.0",
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
-    "uploadthing": "^6.0.0",
+    "uploadthing": "^7.7.4",
     "zod": "^3.22.0"
   },
   "devDependencies": {
