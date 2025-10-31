@@ -21,11 +21,13 @@ Go to **Settings** → **Environment Variables** and add:
 MONGODB_URI=your-mongodb-connection-string
 NEXTAUTH_SECRET=your-secret-key-minimum-32-chars
 NEXTAUTH_URL=https://your-app.vercel.app
-UPLOADTHING_SECRET=your-uploadthing-secret
-UPLOADTHING_APP_ID=your-uploadthing-app-id
+UPLOADTHING_TOKEN=your-uploadthing-token
 ```
 
 > **Note:** Don't add `NODE_ENV` - Vercel sets this automatically!
+> 
+> **UploadThing Token:** Get this from your [UploadThing Dashboard](https://uploadthing.com/dashboard) under "API Keys". Use the token that starts with `sk_live_` for production.
+
 
 ### 4. Redeploy
 - Go to **Deployments** tab
