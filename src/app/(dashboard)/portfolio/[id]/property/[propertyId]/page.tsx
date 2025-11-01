@@ -877,7 +877,14 @@ export default function PropertyDetailPage() {
                 <MessageSquare className="h-5 w-5 text-blue-600" />
                 Notes & Correspondence
               </CardTitle>
-              <CardDescription>Property notes and communication history with timestamps</CardDescription>
+              <CardDescription>
+                Property notes and communication history with timestamps
+                {!canManage && session?.user?.role === 'viewer' && (
+                  <span className="block mt-1 text-blue-600 font-medium">
+                    You can add notes and comments to this property
+                  </span>
+                )}
+              </CardDescription>
             </div>
           </div>
         </CardHeader>

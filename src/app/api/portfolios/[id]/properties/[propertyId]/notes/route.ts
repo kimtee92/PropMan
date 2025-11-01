@@ -54,6 +54,7 @@ export async function POST(
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
 
+    // All authenticated users (including viewers) can add notes
     const body = await request.json();
     const { content } = body;
 
