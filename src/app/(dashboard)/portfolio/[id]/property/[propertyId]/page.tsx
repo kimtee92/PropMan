@@ -49,6 +49,7 @@ export default function PropertyDetailPage() {
   const [fields, setFields] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -86,8 +87,27 @@ export default function PropertyDetailPage() {
       fetchProperty();
       fetchDocuments();
       fetchNotes();
+      if (session?.user?.role === 'admin') {
+        fetchApprovals();
+      }
     }
-  }, [params.id, params.propertyId]);
+  }, [params.id, params.propertyId, session?.user?.role]);
+
+  const fetchApprovals = async () => {
+    try {
+      const res = await fetch('/api/approvals?status=pending');
+      if (res.ok) {
+        const data = await res.json();
+        // Filter approvals for this property
+        const propertyApprovals = data.approvals.filter((a: any) => 
+          a.propertyId?._id === params.propertyId
+        );
+        setApprovals(propertyApprovals);
+      }
+    } catch (error) {
+      console.error('Error fetching approvals:', error);
+    }
+  };
 
   const fetchDocuments = async () => {
     try {
@@ -311,6 +331,61 @@ export default function PropertyDetailPage() {
     }
   };
 
+  const handleApproveField = async (fieldId: string, approvalRequestId: string) => {
+    try {
+      const res = await fetch('/api/approvals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approvalId: approvalRequestId,
+          action: 'approve',
+          comments: 'Approved via inline button',
+        }),
+      });
+
+      if (res.ok) {
+        alert('Field approved successfully!');
+        fetchProperty();
+        fetchApprovals();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to approve field');
+      }
+    } catch (error) {
+      console.error('Error approving field:', error);
+      alert('An error occurred while approving the field');
+    }
+  };
+
+  const handleRejectField = async (fieldId: string, approvalRequestId: string) => {
+    const reason = prompt('Please provide a reason for rejection (field will be deleted):');
+    if (!reason) return;
+
+    try {
+      const res = await fetch('/api/approvals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approvalId: approvalRequestId,
+          action: 'reject',
+          comments: reason,
+        }),
+      });
+
+      if (res.ok) {
+        alert('Field rejected successfully!');
+        fetchProperty();
+        fetchApprovals();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to reject field');
+      }
+    } catch (error) {
+      console.error('Error rejecting field:', error);
+      alert('An error occurred while rejecting the field');
+    }
+  };
+
   const handleDeleteDocument = async (docId: string) => {
     if (!confirm('Are you sure you want to delete this document?')) return;
 
@@ -442,14 +517,7 @@ export default function PropertyDetailPage() {
 
   const canManage = session?.user?.role === 'admin' || session?.user?.role === 'manager';
 
-  // Group fields by type
-  const fieldsByType = {
-    value: fields.filter((f) => f.category === 'value' && f.value != null),
-    revenue: fields.filter((f) => f.category === 'revenue' && f.value != null),
-    expense: fields.filter((f) => f.category === 'expense' && f.value != null),
-    asset: fields.filter((f) => f.category === 'asset' && f.value != null),
-  };
-
+  // Helper function for property status colors
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -457,14 +525,15 @@ export default function PropertyDetailPage() {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'sold':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-gray-100 text-gray-800';
       case 'archived':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-600';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-600';
     }
   };
 
+  // Helper function for approval status colors
   const getApprovalStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -476,6 +545,34 @@ export default function PropertyDetailPage() {
       default:
         return 'text-gray-600';
     }
+  };
+
+  // Group fields by type - include all fields for managers, only approved for others
+  const shouldShowField = (field: any) => {
+    // Admins see all fields
+    if (session?.user?.role === 'admin') return true;
+    
+    // Managers see their own pending fields and all approved fields
+    if (session?.user?.role === 'manager') {
+      return field.status === 'approved' || field.createdBy === session.user.id;
+    }
+    
+    // Others only see approved fields
+    return field.status === 'approved';
+  };
+
+  const fieldsByType = {
+    value: fields.filter((f) => f.category === 'value' && f.value != null && shouldShowField(f)),
+    revenue: fields.filter((f) => f.category === 'revenue' && f.value != null && shouldShowField(f)),
+    expense: fields.filter((f) => f.category === 'expense' && f.value != null && shouldShowField(f)),
+    asset: fields.filter((f) => f.category === 'asset' && f.value != null && shouldShowField(f)),
+  };
+
+  // Helper to find approval request for a field
+  const getFieldApproval = (fieldId: string) => {
+    return approvals.find((a: any) => 
+      a.type === 'field' && a.refId === fieldId && a.status === 'pending'
+    );
   };
 
   return (
@@ -580,34 +677,65 @@ export default function PropertyDetailPage() {
               <p className="text-sm text-gray-500">No values recorded</p>
             ) : (
               <div className="space-y-3">
-                {fieldsByType.value.map((field: any) => (
-                  <div key={field._id} className="border-b pb-2 last:border-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1">
-                        <p className="font-medium">{field.name}</p>
-                        <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
-                        </p>
-                        <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
-                          {field.status}
-                        </p>
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 mt-1"
-                            onClick={() => handleDeleteField(field._id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-red-600" />
-                          </Button>
-                        )}
+                {fieldsByType.value.map((field: any) => {
+                  const isPending = field.status === 'pending';
+                  const approval = getFieldApproval(field._id);
+                  const isAdmin = session?.user?.role === 'admin';
+                  
+                  return (
+                    <div 
+                      key={field._id} 
+                      className={`border-b pb-2 last:border-0 ${isPending ? 'opacity-60 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400' : ''}`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{field.name}</p>
+                          <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">
+                            {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                          </p>
+                          <p className={`text-xs capitalize font-semibold ${getApprovalStatusColor(field.status)}`}>
+                            {isPending && '⏳ '}{field.status}
+                          </p>
+                          <div className="flex gap-1 mt-1 justify-end">
+                            {isPending && isAdmin && approval && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => handleApproveField(field._id, approval._id)}
+                                >
+                                  ✓ Approve
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleRejectField(field._id, approval._id)}
+                                >
+                                  ✗ Reject
+                                </Button>
+                              </>
+                            )}
+                            {canManage && !isPending && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleDeleteField(field._id)}
+                              >
+                                <Trash2 className="h-3 w-3 text-red-600" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -641,34 +769,65 @@ export default function PropertyDetailPage() {
               <p className="text-sm text-gray-500">No assets recorded</p>
             ) : (
               <div className="space-y-3">
-                {fieldsByType.asset.map((field: any) => (
-                  <div key={field._id} className="border-b pb-2 last:border-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1">
-                        <p className="font-medium">{field.name}</p>
-                        <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
-                        </p>
-                        <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
-                          {field.status}
-                        </p>
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 mt-1"
-                            onClick={() => handleDeleteField(field._id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-red-600" />
-                          </Button>
-                        )}
+                {fieldsByType.asset.map((field: any) => {
+                  const isPending = field.status === 'pending';
+                  const approval = getFieldApproval(field._id);
+                  const isAdmin = session?.user?.role === 'admin';
+                  
+                  return (
+                    <div 
+                      key={field._id} 
+                      className={`border-b pb-2 last:border-0 ${isPending ? 'opacity-60 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400' : ''}`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{field.name}</p>
+                          <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">
+                            {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                          </p>
+                          <p className={`text-xs capitalize font-semibold ${getApprovalStatusColor(field.status)}`}>
+                            {isPending && '⏳ '}{field.status}
+                          </p>
+                          <div className="flex gap-1 mt-1 justify-end">
+                            {isPending && isAdmin && approval && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => handleApproveField(field._id, approval._id)}
+                                >
+                                  ✓ Approve
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleRejectField(field._id, approval._id)}
+                                >
+                                  ✗ Reject
+                                </Button>
+                              </>
+                            )}
+                            {canManage && !isPending && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleDeleteField(field._id)}
+                              >
+                                <Trash2 className="h-3 w-3 text-red-600" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -705,37 +864,68 @@ export default function PropertyDetailPage() {
               <p className="text-sm text-gray-500">No revenue recorded</p>
             ) : (
               <div className="space-y-3">
-                {fieldsByType.revenue.map((field: any) => (
-                  <div key={field._id} className="border-b pb-2 last:border-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1">
-                        <p className="font-medium">{field.name}</p>
-                        <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Created: {new Date(field.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-green-600">
-                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
-                        </p>
-                        <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
-                          {field.status}
-                        </p>
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 mt-1"
-                            onClick={() => handleDeleteField(field._id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-red-600" />
-                          </Button>
-                        )}
+                {fieldsByType.revenue.map((field: any) => {
+                  const isPending = field.status === 'pending';
+                  const approval = getFieldApproval(field._id);
+                  const isAdmin = session?.user?.role === 'admin';
+                  
+                  return (
+                    <div 
+                      key={field._id} 
+                      className={`border-b pb-2 last:border-0 ${isPending ? 'opacity-60 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400' : ''}`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{field.name}</p>
+                          <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Created: {new Date(field.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-green-600">
+                            {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                          </p>
+                          <p className={`text-xs capitalize font-semibold ${getApprovalStatusColor(field.status)}`}>
+                            {isPending && '⏳ '}{field.status}
+                          </p>
+                          <div className="flex gap-1 mt-1 justify-end">
+                            {isPending && isAdmin && approval && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => handleApproveField(field._id, approval._id)}
+                                >
+                                  ✓ Approve
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleRejectField(field._id, approval._id)}
+                                >
+                                  ✗ Reject
+                                </Button>
+                              </>
+                            )}
+                            {canManage && !isPending && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleDeleteField(field._id)}
+                              >
+                                <Trash2 className="h-3 w-3 text-red-600" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -769,37 +959,68 @@ export default function PropertyDetailPage() {
               <p className="text-sm text-gray-500">No expenses recorded</p>
             ) : (
               <div className="space-y-3">
-                {fieldsByType.expense.map((field: any) => (
-                  <div key={field._id} className="border-b pb-2 last:border-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1">
-                        <p className="font-medium">{field.name}</p>
-                        <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Created: {new Date(field.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-red-600">
-                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
-                        </p>
-                        <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
-                          {field.status}
-                        </p>
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 mt-1"
-                            onClick={() => handleDeleteField(field._id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-red-600" />
-                          </Button>
-                        )}
+                {fieldsByType.expense.map((field: any) => {
+                  const isPending = field.status === 'pending';
+                  const approval = getFieldApproval(field._id);
+                  const isAdmin = session?.user?.role === 'admin';
+                  
+                  return (
+                    <div 
+                      key={field._id} 
+                      className={`border-b pb-2 last:border-0 ${isPending ? 'opacity-60 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400' : ''}`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{field.name}</p>
+                          <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Created: {new Date(field.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-red-600">
+                            {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                          </p>
+                          <p className={`text-xs capitalize font-semibold ${getApprovalStatusColor(field.status)}`}>
+                            {isPending && '⏳ '}{field.status}
+                          </p>
+                          <div className="flex gap-1 mt-1 justify-end">
+                            {isPending && isAdmin && approval && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => handleApproveField(field._id, approval._id)}
+                                >
+                                  ✓ Approve
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleRejectField(field._id, approval._id)}
+                                >
+                                  ✗ Reject
+                                </Button>
+                              </>
+                            )}
+                            {canManage && !isPending && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleDeleteField(field._id)}
+                              >
+                                <Trash2 className="h-3 w-3 text-red-600" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

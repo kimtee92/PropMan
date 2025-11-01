@@ -105,10 +105,22 @@ export async function POST(request: Request) {
         }
       } else if (approval.type === 'property') {
         const property = await Property.findById(approval.refId);
-        if (property && approval.action === 'update' && approval.proposedData) {
-          Object.assign(property, approval.proposedData);
-          property.updatedBy = user.id as any;
-          await property.save();
+        if (property) {
+          if (approval.action === 'create') {
+            // Approve the property and all its pending fields
+            property.status = 'active';
+            await property.save();
+            
+            // Approve all pending fields for this property
+            await DynamicField.updateMany(
+              { propertyId: property._id, status: 'pending' },
+              { status: 'approved', approvedBy: user.id }
+            );
+          } else if (approval.action === 'update' && approval.proposedData) {
+            Object.assign(property, approval.proposedData);
+            property.updatedBy = user.id as any;
+            await property.save();
+          }
         }
       }
     } else {
@@ -123,6 +135,23 @@ export async function POST(request: Request) {
             await deleteFileFromUploadThing(document.url);
           }
           await Document.findByIdAndUpdate(approval.refId, { status: 'rejected' });
+        } else if (approval.type === 'property') {
+          // When rejecting a property creation, delete the property and all its fields
+          const property = await Property.findById(approval.refId);
+          if (property) {
+            // Delete all fields associated with this property
+            await DynamicField.deleteMany({ propertyId: property._id });
+            // Delete all documents associated with this property
+            const documents = await Document.find({ propertyId: property._id });
+            for (const doc of documents) {
+              if (doc.url) {
+                await deleteFileFromUploadThing(doc.url);
+              }
+            }
+            await Document.deleteMany({ propertyId: property._id });
+            // Delete the property itself
+            await Property.findByIdAndDelete(approval.refId);
+          }
         }
       }
     }

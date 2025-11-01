@@ -23,7 +23,20 @@ export async function GET(
       );
     }
 
-    const properties = await Property.find({ portfolioId: params.id })
+    // Build query to filter properties based on user role and status
+    let propertyQuery: any = { portfolioId: params.id };
+
+    // Non-admins should only see:
+    // 1. Approved properties (everyone)
+    // 2. Pending properties they created (managers only)
+    if (user.role !== 'admin') {
+      propertyQuery.$or = [
+        { status: { $in: ['active', 'sold', 'archived'] } }, // All approved statuses
+        { status: 'pending', createdBy: user.id }, // Their own pending properties
+      ];
+    }
+
+    const properties = await Property.find(propertyQuery)
       .populate('createdBy', 'name email')
       .populate('updatedBy', 'name email')
       .sort({ createdAt: -1 });
@@ -92,13 +105,17 @@ export async function POST(
       );
     }
 
+    // Determine property status based on user role
+    const isManagerOnly = isManager && !isAdmin && !isOwner;
+    const propertyStatus = isManagerOnly ? 'pending' : (status || 'active');
+
     // Create property
     const property = await Property.create({
       portfolioId: params.id,
       name,
       address,
       propertyType: propertyType || 'residential',
-      status: status || 'active',
+      status: propertyStatus,
       fields: [],
       documents: [],
       createdBy: user.id,
@@ -123,9 +140,9 @@ export async function POST(
         frequency: field.frequency,
         currency: 'AUD',
         value: null, // No default value - users should enter actual values
-        status: user.role === 'admin' ? 'approved' : 'pending',
+        status: isManagerOnly ? 'pending' : 'approved',
         createdBy: user.id,
-        approvedBy: user.role === 'admin' ? user.id : undefined,
+        approvedBy: isManagerOnly ? undefined : user.id,
       })
     );
 
@@ -134,7 +151,7 @@ export async function POST(
     await property.save();
 
     // If created by manager, create approval request
-    if (user.role === 'manager') {
+    if (isManagerOnly) {
       await ApprovalRequest.create({
         type: 'property',
         refId: property._id,

@@ -12,7 +12,7 @@ interface Property {
   _id: string;
   name: string;
   address: string;
-  status: 'active' | 'sold' | 'under renovation';
+  status: 'active' | 'pending' | 'sold' | 'archived';
   imageUrl?: string;
   fieldsData?: any[];
 }
@@ -23,10 +23,13 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property, portfolioId }: PropertyCardProps) {
-  const statusColors = {
+  const isPending = property.status === 'pending';
+  
+  const statusColors: Record<string, string> = {
     active: 'bg-green-100 text-green-800',
+    pending: 'bg-yellow-100 text-yellow-800',
     sold: 'bg-gray-100 text-gray-800',
-    'under renovation': 'bg-yellow-100 text-yellow-800',
+    archived: 'bg-gray-100 text-gray-600',
   };
 
   const propertyValue = property.fieldsData?.find(
@@ -34,14 +37,14 @@ export function PropertyCard({ property, portfolioId }: PropertyCardProps) {
   );
 
   return (
-    <Card className="hover:shadow-md transition-shadow overflow-hidden">
+    <Card className={`hover:shadow-md transition-shadow overflow-hidden ${isPending ? 'opacity-60 border-2 border-dashed border-yellow-400' : ''}`}>
       {property.imageUrl && (
         <div className="relative h-48 w-full bg-gray-100">
           <Image
             src={property.imageUrl}
             alt={property.name}
             fill
-            className="object-cover"
+            className={`object-cover ${isPending ? 'grayscale' : ''}`}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
@@ -52,6 +55,11 @@ export function PropertyCard({ property, portfolioId }: PropertyCardProps) {
         </div>
       )}
       <CardHeader className="pb-3">
+        {isPending && (
+          <div className="mb-3 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-xs text-yellow-800 font-medium">⏳ Pending Admin Approval</p>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
           <div className="flex items-start space-x-3 min-w-0 flex-1">
             <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
