@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import connectDB from '@/lib/db';
 import ApprovalRequest from '@/models/ApprovalRequest';
 import DynamicField from '@/models/DynamicField';
@@ -7,8 +7,8 @@ import Property from '@/models/Property';
 import { requireAuth, requireRole, createAuditLog } from '@/lib/server-utils';
 import { deleteFileFromUploadThing } from '@/lib/uploadthing-delete';
 
-// GET all pending approvals (admin only)
-export async function GET(request: Request) {
+// GET /api/approvals - List all pending approvals (admin only)
+export async function GET(request: NextRequest) {
   try {
     await requireRole(['admin']);
     await connectDB();
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST approve or reject an approval request
+// POST approve or reject an approval request (admin only)
 export async function POST(request: Request) {
   try {
     const user = await requireRole(['admin']);

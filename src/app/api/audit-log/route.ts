@@ -19,6 +19,11 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const filterToday = searchParams.get('today') === 'true';
+    const action = searchParams.get('action');
+    const entity = searchParams.get('entity');
+    const user = searchParams.get('user');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
 
     let query: any = {};
     
@@ -39,12 +44,46 @@ export async function GET(req: NextRequest) {
       };
     }
 
+    // Apply action filter (partial match, case-insensitive)
+    if (action) {
+      query.action = { $regex: new RegExp(action, 'i') };
+    }
+
+    // Apply entity type filter
+    if (entity) {
+      query.targetType = entity;
+    }
+
+    // Apply date range filters
+    if (dateFrom || dateTo) {
+      query.timestamp = {};
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        query.timestamp.$gte = fromDate;
+      }
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        query.timestamp.$lte = toDate;
+      }
+    }
+
     const logs = await AuditLog.find(query)
       .populate('userId', 'name email')
       .sort({ timestamp: -1 })
       .limit(100);
 
-    return NextResponse.json({ logs });
+    // Apply user name filter after population (since it's a populated field)
+    let filteredLogs = logs;
+    if (user) {
+      const userLower = user.toLowerCase();
+      filteredLogs = logs.filter((log) => 
+        log.userId?.name?.toLowerCase().includes(userLower)
+      );
+    }
+
+    return NextResponse.json({ logs: filteredLogs });
   } catch (error) {
     console.error('Error fetching audit logs:', error);
     return NextResponse.json(

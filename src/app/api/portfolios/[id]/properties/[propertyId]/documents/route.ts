@@ -5,6 +5,8 @@ import connectDB from '@/lib/db';
 import Portfolio from '@/models/Portfolio';
 import Property from '@/models/Property';
 import Document from '@/models/Document';
+import ApprovalRequest from '@/models/ApprovalRequest';
+import { createAuditLog } from '@/lib/server-utils';
 
 export async function GET(
   req: NextRequest,
@@ -91,6 +93,9 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Determine if direct creation or approval needed
+    const needsApproval = isManager && !isOwner && !isAdmin;
+
     // Create document
     const document = await Document.create({
       propertyId: params.propertyId,
@@ -100,7 +105,50 @@ export async function POST(
       fileType: fileType || 'application/octet-stream',
       fileSize: fileSize || 0,
       uploadedBy: session.user.id,
-      status: 'approved', // Auto-approve for owners/admins/managers
+      status: needsApproval ? 'pending' : 'approved',
+    });
+
+    // If manager, create approval request
+    if (needsApproval) {
+      await ApprovalRequest.create({
+        type: 'document',
+        refId: document._id,
+        propertyId: params.propertyId,
+        portfolioId: params.id,
+        action: 'create',
+        submittedBy: session.user.id,
+        status: 'pending',
+        proposedData: document.toObject(),
+      });
+
+      await createAuditLog({
+        userId: session.user.id,
+        action: 'Requested document upload',
+        targetType: 'document',
+        targetId: document._id.toString(),
+        changes: {
+          after: { name, fileUrl },
+        },
+      });
+
+      return NextResponse.json(
+        {
+          message: 'Document upload pending approval',
+          document: await Document.findById(document._id).populate('uploadedBy', 'name email'),
+        },
+        { status: 202 }
+      );
+    }
+
+    // Owner/Admin: Create audit log for direct creation
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'Uploaded document',
+      targetType: 'document',
+      targetId: document._id.toString(),
+      changes: {
+        after: { name, fileUrl },
+      },
     });
 
     const populatedDoc = await Document.findById(document._id).populate(

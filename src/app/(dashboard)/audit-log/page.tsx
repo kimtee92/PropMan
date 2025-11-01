@@ -5,7 +5,11 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, User, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { FileText, User, Calendar, Filter, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -21,6 +25,14 @@ export default function AuditLogPage() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showingToday, setShowingToday] = useState(false);
+  
+  // Filter states
+  const [filterAction, setFilterAction] = useState('');
+  const [filterEntity, setFilterEntity] = useState('');
+  const [filterUser, setFilterUser] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (session?.user?.role !== 'admin') {
@@ -34,7 +46,7 @@ export default function AuditLogPage() {
     setShowingToday(filterToday);
     
     fetchLogs();
-  }, [session, router]);
+  }, [session, router, filterAction, filterEntity, filterUser, filterDateFrom, filterDateTo]);
 
   const fetchLogs = async () => {
     try {
@@ -42,7 +54,28 @@ export default function AuditLogPage() {
       const urlParams = new URLSearchParams(window.location.search);
       const filterToday = urlParams.get('today') === 'true';
       
-      const url = filterToday ? '/api/audit-log?today=true' : '/api/audit-log';
+      // Build query params
+      const params = new URLSearchParams();
+      if (filterToday) {
+        params.append('today', 'true');
+      }
+      if (filterAction) {
+        params.append('action', filterAction);
+      }
+      if (filterEntity) {
+        params.append('entity', filterEntity);
+      }
+      if (filterUser) {
+        params.append('user', filterUser);
+      }
+      if (filterDateFrom) {
+        params.append('dateFrom', filterDateFrom);
+      }
+      if (filterDateTo) {
+        params.append('dateTo', filterDateTo);
+      }
+      
+      const url = `/api/audit-log?${params.toString()}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -53,6 +86,14 @@ export default function AuditLogPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearFilters = () => {
+    setFilterAction('');
+    setFilterEntity('');
+    setFilterUser('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
   };
 
   const getActionBadge = (action: string) => {
@@ -97,6 +138,109 @@ export default function AuditLogPage() {
             : 'Track all changes and actions in the system'}
         </p>
       </div>
+
+      {/* Filter Controls */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+          </div>
+        </CardHeader>
+        {showFilters && (
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="filterAction">Action</Label>
+                <select
+                  id="filterAction"
+                  value={filterAction}
+                  onChange={(e) => setFilterAction(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Actions</option>
+                  <option value="create">Create</option>
+                  <option value="update">Update</option>
+                  <option value="delete">Delete</option>
+                  <option value="approve">Approve</option>
+                  <option value="reject">Reject</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="filterEntity">Entity Type</Label>
+                <select
+                  id="filterEntity"
+                  value={filterEntity}
+                  onChange={(e) => setFilterEntity(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Types</option>
+                  <option value="field">Field</option>
+                  <option value="document">Document</option>
+                  <option value="property">Property</option>
+                  <option value="portfolio">Portfolio</option>
+                  <option value="approval">Approval</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="filterUser">User Name</Label>
+                <Input
+                  id="filterUser"
+                  type="text"
+                  placeholder="Search by name..."
+                  value={filterUser}
+                  onChange={(e) => setFilterUser(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="filterDateFrom">Date From</Label>
+                <Input
+                  id="filterDateFrom"
+                  type="date"
+                  value={filterDateFrom}
+                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="filterDateTo">Date To</Label>
+                <Input
+                  id="filterDateTo"
+                  type="date"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="w-full"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
       <Card>
         <CardHeader>
