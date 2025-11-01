@@ -92,33 +92,76 @@ A modern property and portfolio management web application with role-based acces
 ## 📁 Project Structure
 
 ```
-src/
-├── app/
-│   ├── (dashboard)/          # Protected routes (dashboard, portfolios)
-│   ├── api/                  # API endpoints
-│   │   ├── auth/             # Authentication
-│   │   ├── portfolios/       # Portfolio CRUD
-│   │   ├── properties/       # Property CRUD
-│   │   ├── approvals/        # Approval workflows
-│   │   └── uploadthing/      # File uploads
-│   ├── login/                # Login page
-│   └── layout.tsx            # Root layout
-├── components/
-│   ├── ui/                   # ShadCN UI components
-│   ├── Navbar.tsx
-│   └── PortfolioCard.tsx
-├── lib/
-│   ├── auth.ts               # NextAuth configuration
-│   ├── db.ts                 # MongoDB connection
-│   └── utils.ts              # Utility functions
-└── models/                   # Mongoose schemas
-    ├── User.ts
-    ├── Portfolio.ts
-    ├── Property.ts
-    ├── DynamicField.ts
-    ├── Document.ts
-    ├── ApprovalRequest.ts
-    └── AuditLog.ts
+propman/
+├── src/
+│   ├── app/
+│   │   ├── (dashboard)/           # Protected dashboard routes
+│   │   │   ├── layout.tsx         # Dashboard layout wrapper
+│   │   │   ├── dashboard/         # Main dashboard page
+│   │   │   ├── portfolios/        # Portfolios list page
+│   │   │   ├── portfolio/[id]/    # Portfolio detail & properties
+│   │   │   │   └── property/[propertyId]/  # Property detail page
+│   │   │   ├── approvals/         # Approval management (admin)
+│   │   │   └── audit-log/         # Audit log viewer (admin)
+│   │   ├── api/                   # API routes (Next.js serverless)
+│   │   │   ├── auth/              # NextAuth authentication
+│   │   │   │   ├── [...nextauth]/ # NextAuth handler
+│   │   │   │   └── register/      # User registration
+│   │   │   ├── portfolios/        # Portfolio CRUD & nested routes
+│   │   │   │   └── [id]/
+│   │   │   │       └── properties/
+│   │   │   │           └── [propertyId]/
+│   │   │   │               ├── documents/  # Document management
+│   │   │   │               └── fields/     # Dynamic fields
+│   │   │   ├── approvals/         # Approval workflow endpoints
+│   │   │   ├── audit-log/         # Audit log endpoints
+│   │   │   ├── users/             # User management
+│   │   │   └── uploadthing/       # File upload handlers
+│   │   ├── login/                 # Login page
+│   │   ├── layout.tsx             # Root layout
+│   │   ├── page.tsx               # Home (redirects to dashboard)
+│   │   ├── providers.tsx          # Client-side providers
+│   │   └── globals.css            # Global styles
+│   ├── components/
+│   │   ├── ui/                    # ShadCN UI components
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── select.tsx
+│   │   │   ├── table.tsx
+│   │   │   └── ...
+│   │   ├── Navbar.tsx             # Main navigation with mobile menu
+│   │   ├── PortfolioCard.tsx      # Portfolio card component
+│   │   └── PropertyCard.tsx       # Property card component
+│   ├── lib/
+│   │   ├── auth.ts                # NextAuth configuration
+│   │   ├── db.ts                  # MongoDB connection
+│   │   ├── uploadthing.ts         # UploadThing configuration
+│   │   ├── server-utils.ts        # Server-side utilities
+│   │   └── utils.ts               # Shared utility functions
+│   ├── models/                    # Mongoose schemas
+│   │   ├── User.ts                # User model
+│   │   ├── Portfolio.ts           # Portfolio model
+│   │   ├── Property.ts            # Property model
+│   │   ├── DynamicField.ts        # Custom fields model
+│   │   ├── Document.ts            # Document metadata model
+│   │   ├── ApprovalRequest.ts     # Approval workflow model
+│   │   └── AuditLog.ts            # Audit trail model
+│   └── types/
+│       └── next-auth.d.ts         # TypeScript type extensions
+├── scripts/
+│   └── seed.js                    # Database seeding script
+├── public/                        # Static assets
+├── .env.local                     # Environment variables (not in repo)
+├── .env.example                   # Example environment file
+├── next.config.js                 # Next.js configuration
+├── tailwind.config.js             # Tailwind CSS configuration
+├── tsconfig.json                  # TypeScript configuration
+├── package.json                   # Dependencies and scripts
+├── README.md                      # This file
+├── SETUP.md                       # Setup instructions
+└── TROUBLESHOOTING.md             # Troubleshooting guide
 ```
 
 ## 🎯 Default Fields

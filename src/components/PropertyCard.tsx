@@ -51,35 +51,35 @@ export function PropertyCard({ property, portfolioId }: PropertyCardProps) {
           <ImageIcon className="h-16 w-16 text-blue-300" />
         </div>
       )}
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Home className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-3">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+          <div className="flex items-start space-x-3 min-w-0 flex-1">
+            <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+              <Home className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <div>
-              <CardTitle className="text-lg">{property.name}</CardTitle>
-              <div className="flex items-center text-sm text-gray-500 mt-1">
-                <MapPin className="h-3 w-3 mr-1" />
-                {property.address}
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-base sm:text-lg truncate">{property.name}</CardTitle>
+              <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
+                <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate">{property.address}</span>
               </div>
             </div>
           </div>
-          <span className={`px-2 py-1 text-xs rounded-full ${statusColors[property.status]}`}>
+          <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${statusColors[property.status]}`}>
             {property.status}
           </span>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
           {propertyValue && (
-            <div className="flex items-center text-lg font-semibold text-gray-900">
-              <DollarSign className="h-5 w-5 mr-1 text-green-600" />
-              {formatCurrency(propertyValue.value, propertyValue.currency)}
+            <div className="flex items-center text-base sm:text-lg font-semibold text-gray-900">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 mr-1 text-green-600" />
+              <span className="truncate">{formatCurrency(propertyValue.value, propertyValue.currency)}</span>
             </div>
           )}
-          <Link href={`/portfolio/${portfolioId}/property/${property._id}`}>
-            <Button size="sm">View Details</Button>
+          <Link href={`/portfolio/${portfolioId}/property/${property._id}`} className="w-full sm:w-auto">
+            <Button size="sm" className="w-full sm:w-auto">View Details</Button>
           </Link>
         </div>
       </CardContent>

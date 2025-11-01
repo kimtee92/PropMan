@@ -69,23 +69,23 @@ export default function PortfoliosPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Portfolios</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Portfolios</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Manage your property portfolios
           </p>
         </div>
         {session?.user?.role === 'admin' && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 New Portfolio
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="mx-3 sm:mx-0">
               <form onSubmit={handleCreatePortfolio}>
                 <DialogHeader>
                   <DialogTitle>Create New Portfolio</DialogTitle>
@@ -131,7 +131,7 @@ export default function PortfoliosPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={creating}>
+                  <Button type="submit" disabled={creating} className="w-full sm:w-auto">
                     {creating ? 'Creating...' : 'Create Portfolio'}
                   </Button>
                 </DialogFooter>
@@ -156,7 +156,7 @@ export default function PortfoliosPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {portfolios.map((portfolio: any) => (
             <PortfolioCard
               key={portfolio._id}

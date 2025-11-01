@@ -200,119 +200,126 @@ export default function PortfolioDetailPage() {
   const isOwner = portfolio?.owners?.some((o: any) => o._id === session?.user?.id) || session?.user?.role === 'admin';
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
         <Link href="/portfolios">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="flex-shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-900">{portfolio.name}</h1>
-          <p className="text-gray-600 mt-1">{portfolio.entity}</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">{portfolio.name}</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 truncate">{portfolio.entity}</p>
           {portfolio.description && (
-            <p className="text-sm text-gray-500 mt-2">{portfolio.description}</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-2 line-clamp-2">{portfolio.description}</p>
           )}
         </div>
-        {isOwner && (
-          <Button variant="outline" className="mr-2" onClick={() => setUserDialogOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Users
-          </Button>
-        )}
-        {canManage && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Property
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <form onSubmit={handleCreateProperty}>
-                <DialogHeader>
-                  <DialogTitle>Add New Property</DialogTitle>
-                  <DialogDescription>
-                    Add a property to this portfolio.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Property Name</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., 123 Main Street"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      required
-                    />
+        <div className="flex gap-2 w-full sm:w-auto">
+          {isOwner && (
+            <Button 
+              variant="outline" 
+              onClick={() => setUserDialogOpen(true)}
+              className="flex-1 sm:flex-none"
+            >
+              <UserPlus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Users</span>
+            </Button>
+          )}
+          {canManage && (
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex-1 sm:flex-none">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Add Property</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="mx-3 sm:mx-0">
+                <form onSubmit={handleCreateProperty}>
+                  <DialogHeader>
+                    <DialogTitle>Add New Property</DialogTitle>
+                    <DialogDescription>
+                      Add a property to this portfolio.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name">Property Name</Label>
+                      <Input
+                        id="name"
+                        placeholder="e.g., 123 Main Street"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="address">Address</Label>
+                      <Input
+                        id="address"
+                        placeholder="Full property address"
+                        value={formData.address}
+                        onChange={(e) =>
+                          setFormData({ ...formData, address: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="propertyType">Property Type</Label>
+                      <Select
+                        value={formData.propertyType}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, propertyType: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="residential">Residential</SelectItem>
+                          <SelectItem value="commercial">Commercial</SelectItem>
+                          <SelectItem value="industrial">Industrial</SelectItem>
+                          <SelectItem value="land">Land</SelectItem>
+                          <SelectItem value="mixed">Mixed Use</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, status: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="sold">Sold</SelectItem>
+                          <SelectItem value="archived">Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      placeholder="Full property address"
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="propertyType">Property Type</Label>
-                    <Select
-                      value={formData.propertyType}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, propertyType: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="residential">Residential</SelectItem>
-                        <SelectItem value="commercial">Commercial</SelectItem>
-                        <SelectItem value="industrial">Industrial</SelectItem>
-                        <SelectItem value="land">Land</SelectItem>
-                        <SelectItem value="mixed">Mixed Use</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="sold">Sold</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={creating}>
-                    {creating ? 'Adding...' : 'Add Property'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
+                  <DialogFooter>
+                    <Button type="submit" disabled={creating} className="w-full sm:w-auto">
+                      {creating ? 'Adding...' : 'Add Property'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -355,15 +362,15 @@ export default function PortfolioDetailPage() {
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Properties</h2>
+        <h2 className="text-lg sm:text-xl font-semibold mb-4">Properties</h2>
         {properties.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Building2 className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                 No properties yet
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 mb-4 text-center px-4">
                 {canManage
                   ? 'Add your first property to get started'
                   : 'No properties have been added to this portfolio yet'}
@@ -371,7 +378,7 @@ export default function PortfolioDetailPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((property: any) => (
               <PropertyCard
                 key={property._id}
@@ -385,7 +392,7 @@ export default function PortfolioDetailPage() {
 
       {/* Add Users Dialog */}
       <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
-        <DialogContent>
+        <DialogContent className="mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleAddUser}>
             <DialogHeader>
               <DialogTitle>Add User to Portfolio</DialogTitle>
@@ -424,7 +431,7 @@ export default function PortfolioDetailPage() {
               {/* Current Users Display */}
               <div className="border-t pt-4 mt-2">
                 <h4 className="font-semibold mb-2 text-sm">Current Access:</h4>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-xs sm:text-sm">
                   <div>
                     <span className="font-medium">Owners:</span>{' '}
                     {portfolio?.owners?.map((o: any) => o.name).join(', ') || 'None'}
@@ -441,7 +448,7 @@ export default function PortfolioDetailPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={creating || !selectedUser}>
+              <Button type="submit" disabled={creating || !selectedUser} className="w-full sm:w-auto">
                 {creating ? 'Adding...' : 'Add User'}
               </Button>
             </DialogFooter>
