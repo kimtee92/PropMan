@@ -30,7 +30,7 @@ export function PropertyCard({ property, portfolioId }: PropertyCardProps) {
   };
 
   const propertyValue = property.fieldsData?.find(
-    (f) => f.name === 'Property Value' && f.status === 'approved'
+    (f) => f.name === 'Property Value' && f.status === 'approved' && f.value != null
   );
 
   return (
