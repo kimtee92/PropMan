@@ -93,12 +93,12 @@ export async function POST(
       updatedBy: user.id,
     });
 
-    // Create default fields
+    // Create default fields (without initial values - let users add them)
     const defaultFields = [
-      { name: 'Property Value', category: 'value', type: 'currency', value: 0 },
-      { name: 'Monthly Rent', category: 'revenue', type: 'currency', value: 0, frequency: 'monthly' },
-      { name: 'Utilities', category: 'expense', type: 'currency', value: 0, frequency: 'monthly' },
-      { name: 'Furniture Asset Value', category: 'asset', type: 'currency', value: 0 },
+      { name: 'Property Value', category: 'value', type: 'currency', frequency: 'one-time' },
+      { name: 'Monthly Rent', category: 'revenue', type: 'currency', frequency: 'monthly' },
+      { name: 'Utilities', category: 'expense', type: 'currency', frequency: 'monthly' },
+      { name: 'Furniture Asset Value', category: 'asset', type: 'currency', frequency: 'one-time' },
     ];
 
     const fieldPromises = defaultFields.map((field) =>
@@ -108,9 +108,9 @@ export async function POST(
         name: field.name,
         category: field.category,
         type: field.type,
-        frequency: field.frequency || 'one-time',
+        frequency: field.frequency,
         currency: 'AUD',
-        value: field.value,
+        value: null, // No default value - users should enter actual values
         status: user.role === 'admin' ? 'approved' : 'pending',
         createdBy: user.id,
         approvedBy: user.role === 'admin' ? user.id : undefined,

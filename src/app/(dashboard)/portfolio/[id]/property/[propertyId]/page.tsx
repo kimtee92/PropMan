@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Edit, FileText, DollarSign, TrendingUp, Upload, Trash2, Plus, X, ImageIcon, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useUploadThing } from '@/lib/uploadthing';
+import { formatCurrency } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -443,10 +444,10 @@ export default function PropertyDetailPage() {
 
   // Group fields by type
   const fieldsByType = {
-    value: fields.filter((f) => f.category === 'value'),
-    revenue: fields.filter((f) => f.category === 'revenue'),
-    expense: fields.filter((f) => f.category === 'expense'),
-    asset: fields.filter((f) => f.category === 'asset'),
+    value: fields.filter((f) => f.category === 'value' && f.value != null),
+    revenue: fields.filter((f) => f.category === 'revenue' && f.value != null),
+    expense: fields.filter((f) => f.category === 'expense' && f.value != null),
+    asset: fields.filter((f) => f.category === 'asset' && f.value != null),
   };
 
   const getStatusColor = (status: string) => {
@@ -587,7 +588,9 @@ export default function PropertyDetailPage() {
                         <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${field.value?.toLocaleString() || 0}</p>
+                        <p className="font-semibold">
+                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                        </p>
                         <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
                           {field.status}
                         </p>
@@ -646,7 +649,9 @@ export default function PropertyDetailPage() {
                         <p className="text-sm text-gray-500 capitalize mt-1">{field.frequency}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${field.value?.toLocaleString() || 0}</p>
+                        <p className="font-semibold">
+                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                        </p>
                         <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
                           {field.status}
                         </p>
@@ -711,7 +716,9 @@ export default function PropertyDetailPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-green-600">${field.value?.toLocaleString() || 0}</p>
+                        <p className="font-semibold text-green-600">
+                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                        </p>
                         <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
                           {field.status}
                         </p>
@@ -773,7 +780,9 @@ export default function PropertyDetailPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-red-600">${field.value?.toLocaleString() || 0}</p>
+                        <p className="font-semibold text-red-600">
+                          {field.value != null ? formatCurrency(field.value, field.currency || 'AUD') : 'Not set'}
+                        </p>
                         <p className={`text-xs capitalize ${getApprovalStatusColor(field.status)}`}>
                           {field.status}
                         </p>
