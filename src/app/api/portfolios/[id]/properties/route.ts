@@ -70,6 +70,18 @@ export async function POST(
       );
     }
 
+    // Check permissions - only admins and managers can create properties
+    const isAdmin = user.role === 'admin';
+    const isManager = portfolio.managers?.some((m: any) => m.toString() === user.id);
+    const isOwner = portfolio.owners?.some((o: any) => o.toString() === user.id);
+
+    if (!isAdmin && !isManager && !isOwner) {
+      return NextResponse.json(
+        { error: 'You do not have permission to create properties in this portfolio' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { name, address, status, propertyType } = body;
 
