@@ -127,18 +127,43 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Getting Started</CardTitle>
-          <CardDescription>Tips for using PropMan</CardDescription>
+          <CardDescription>
+            {session.user.role === 'admin' && 'Admin tips for managing PropMan'}
+            {session.user.role === 'manager' && 'Manager tips for managing properties'}
+            {session.user.role === 'viewer' && 'Viewer tips for using PropMan'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li>• Create portfolios to group your properties</li>
-            <li>• Add properties with custom financial fields</li>
-            <li>• Upload documents for each property</li>
-            <li>• Track all changes in the audit log</li>
-            {session.user.role === 'admin' && (
+          {session.user.role === 'admin' && (
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• Create and manage portfolios for the organization</li>
+              <li>• Add properties with custom financial fields</li>
               <li>• Review and approve manager submissions</li>
-            )}
-          </ul>
+              <li>• Assign managers and viewers to portfolios</li>
+              <li>• Track all changes in the audit log</li>
+              <li>• Manage user accounts and permissions</li>
+            </ul>
+          )}
+          {session.user.role === 'manager' && (
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• View and manage properties in your assigned portfolios</li>
+              <li>• Add and update property details (requires admin approval)</li>
+              <li>• Add financial fields like value, revenue, and expenses</li>
+              <li>• Upload property documents and images</li>
+              <li>• Add notes and correspondence for communication</li>
+              <li>• Your changes will be reviewed by an admin</li>
+            </ul>
+          )}
+          {session.user.role === 'viewer' && (
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• View properties in your assigned portfolios</li>
+              <li>• Review property details, values, and financials</li>
+              <li>• Access all approved documents and images</li>
+              <li>• Add notes and correspondence to properties</li>
+              <li>• Track property updates and changes</li>
+              <li>• Read-only access to all other data</li>
+            </ul>
+          )}
           {process.env.NODE_ENV === 'development' && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-xs font-semibold text-gray-700 mb-2">Demo Accounts:</p>
