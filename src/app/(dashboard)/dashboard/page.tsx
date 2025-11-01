@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import connectDB from '@/lib/db';
 import Portfolio from '@/models/Portfolio';
 import ApprovalRequest from '@/models/ApprovalRequest';
+import mongoose from 'mongoose';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -20,7 +21,23 @@ export default async function DashboardPage() {
   // Fetch real data
   await connectDB();
   
-  const portfolioCount = await Portfolio.countDocuments();
+  // Count portfolios based on user role and access
+  let portfolioCount = 0;
+  if (session.user.role === 'admin') {
+    // Admins see all portfolios
+    portfolioCount = await Portfolio.countDocuments();
+  } else {
+    // Managers and viewers see only portfolios they have access to
+    const userId = new mongoose.Types.ObjectId(session.user.id);
+    portfolioCount = await Portfolio.countDocuments({
+      $or: [
+        { owners: userId },
+        { managers: userId },
+        { viewers: userId },
+      ],
+    });
+  }
+  
   const pendingApprovalsCount = session.user.role === 'admin' 
     ? await ApprovalRequest.countDocuments({ status: 'pending' })
     : 0;
@@ -38,7 +55,7 @@ export default async function DashboardPage() {
     {
       title: 'Portfolios',
       value: portfolioCount.toString(),
-      description: 'Total portfolios',
+      description: session.user.role === 'admin' ? 'Total portfolios' : 'Your portfolios',
       icon: Building,
       href: '/portfolios',
       color: 'text-blue-600',
