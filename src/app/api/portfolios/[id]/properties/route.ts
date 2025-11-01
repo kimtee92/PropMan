@@ -23,8 +23,8 @@ export async function GET(
       );
     }
 
-    // Build query to filter properties based on user role and status
-    let propertyQuery: any = { portfolioId: params.id };
+  // Build query to filter properties based on user role and status
+  const propertyQuery: any = { portfolioId: params.id };
 
     // Non-admins should only see:
     // 1. Approved properties (everyone)
