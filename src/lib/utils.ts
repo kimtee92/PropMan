@@ -14,6 +14,11 @@ export function formatCurrency(value: number, currency: string = 'AUD'): string 
   }).format(value);
 }
 
+export function parseCurrencyInput(value: string): string {
+  // Remove all non-numeric characters except decimal point and minus sign
+  return value.replace(/[^0-9.-]/g, '');
+}
+
 export function formatDate(date: Date | string): string {
   return new Intl.DateTimeFormat('en-AU', {
     year: 'numeric',

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Edit, FileText, DollarSign, TrendingUp, Upload, Trash2, Plus, ImageIcon, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useUploadThing } from '@/lib/uploadthing';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, parseCurrencyInput } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -1331,9 +1331,14 @@ export default function PropertyDetailPage() {
                 id="fieldValue"
                 placeholder="Enter value"
                 value={fieldFormData.value}
-                onChange={(e) =>
-                  setFieldFormData({ ...fieldFormData, value: e.target.value })
-                }
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  // If it's a currency or number field, clean the input
+                  const cleanedValue = (fieldFormData.dataType === 'currency' || fieldFormData.dataType === 'number')
+                    ? parseCurrencyInput(rawValue)
+                    : rawValue;
+                  setFieldFormData({ ...fieldFormData, value: cleanedValue });
+                }}
               />
             </div>
             {(fieldFormData.fieldType === 'revenue' || fieldFormData.fieldType === 'expense') && (
