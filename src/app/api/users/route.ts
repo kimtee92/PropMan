@@ -26,6 +26,7 @@ export async function GET(request: Request) {
     const usersWithPortfolios = await Promise.all(
       users.map(async (user) => {
         const portfolios = await Portfolio.find({
+          isDeleted: { $ne: true },
           $or: [
             { owners: user._id },
             { managers: user._id },
