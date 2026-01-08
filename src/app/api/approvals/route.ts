@@ -5,6 +5,7 @@ import DynamicField from '@/models/DynamicField';
 import Document from '@/models/Document';
 import Property from '@/models/Property';
 import Portfolio from '@/models/Portfolio';
+import User from '@/models/User';
 import { requireAuth, requireRole, createAuditLog } from '@/lib/server-utils';
 import { deleteFileFromUploadThing } from '@/lib/uploadthing-delete';
 

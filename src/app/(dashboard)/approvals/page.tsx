@@ -40,9 +40,12 @@ export default function ApprovalsPage() {
   const fetchApprovals = async () => {
     try {
       const res = await fetch('/api/approvals?status=pending');
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setApprovals(data.approvals || []);
+      } else {
+        console.error('API error:', data.error);
+        setApprovals([]);
       }
     } catch (error) {
       console.error('Error fetching approvals:', error);
