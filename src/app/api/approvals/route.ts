@@ -4,6 +4,7 @@ import ApprovalRequest from '@/models/ApprovalRequest';
 import DynamicField from '@/models/DynamicField';
 import Document from '@/models/Document';
 import Property from '@/models/Property';
+import Portfolio from '@/models/Portfolio';
 import { requireAuth, requireRole, createAuditLog } from '@/lib/server-utils';
 import { deleteFileFromUploadThing } from '@/lib/uploadthing-delete';
 
@@ -26,9 +27,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ approvals }, { status: 200 });
   } catch (error: any) {
     console.error('Get approvals error:', error);
+    const message = error.message || 'Failed to fetch approvals';
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch approvals' },
-      { status: error.message.includes('Forbidden') ? 403 : 500 }
+      { error: message },
+      { status: message.includes('Forbidden') ? 403 : 500 }
     );
   }
 }
