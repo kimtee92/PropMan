@@ -8,13 +8,15 @@ import { Button } from './ui/button';
 import { Home, MapPin, DollarSign, ImageIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
+import { IDynamicField } from '@/types';
+
 interface Property {
   _id: string;
   name: string;
   address: string;
   status: 'active' | 'pending' | 'sold' | 'archived';
   imageUrl?: string;
-  fieldsData?: any[];
+  fieldsData?: IDynamicField[];
 }
 
 interface PropertyCardProps {
@@ -83,7 +85,7 @@ export function PropertyCard({ property, portfolioId }: PropertyCardProps) {
           {propertyValue && (
             <div className="flex items-center text-base sm:text-lg font-semibold text-gray-900">
               <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 mr-1 text-green-600" />
-              <span className="truncate">{formatCurrency(propertyValue.value, propertyValue.currency)}</span>
+              <span className="truncate">{formatCurrency(Number(propertyValue.value), propertyValue.currency)}</span>
             </div>
           )}
           <Link href={`/portfolio/${portfolioId}/property/${property._id}`} className="w-full sm:w-auto">

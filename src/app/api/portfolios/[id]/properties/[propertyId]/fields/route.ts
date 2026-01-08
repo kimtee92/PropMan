@@ -20,7 +20,7 @@ export async function POST(
 
     await connectDB();
 
-    const { fieldName, fieldType, dataType, value, frequency, description } = await req.json();
+    const { fieldName, fieldType, dataType, value, frequency } = await req.json();
 
     // Validate required fields
     if (!fieldName || !fieldType || !dataType || !value) {

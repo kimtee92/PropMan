@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Edit, FileText, DollarSign, TrendingUp, Upload, Trash2, Plus, X, ImageIcon, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, DollarSign, TrendingUp, Upload, Trash2, Plus, ImageIcon, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useUploadThing } from '@/lib/uploadthing';
 import { formatCurrency } from '@/lib/utils';
@@ -82,24 +82,13 @@ export default function PropertyDetailPage() {
     status: 'active',
   });
 
-  useEffect(() => {
-    if (params.id && params.propertyId) {
-      fetchProperty();
-      fetchDocuments();
-      fetchNotes();
-      if (session?.user?.role === 'admin') {
-        fetchApprovals();
-      }
-    }
-  }, [params.id, params.propertyId, session?.user?.role]);
-
-  const fetchApprovals = async () => {
+  const fetchApprovals = useCallback(async () => {
     try {
       const res = await fetch('/api/approvals?status=pending');
       if (res.ok) {
         const data = await res.json();
         // Filter approvals for this property
-        const propertyApprovals = data.approvals.filter((a: any) => 
+        const propertyApprovals = data.approvals.filter((a: { propertyId?: { _id: string } }) => 
           a.propertyId?._id === params.propertyId
         );
         setApprovals(propertyApprovals);
@@ -107,9 +96,9 @@ export default function PropertyDetailPage() {
     } catch (error) {
       console.error('Error fetching approvals:', error);
     }
-  };
+  }, [params.propertyId]);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       const res = await fetch(`/api/portfolios/${params.id}/properties/${params.propertyId}/documents`);
       if (res.ok) {
@@ -119,9 +108,9 @@ export default function PropertyDetailPage() {
     } catch (error) {
       console.error('Error fetching documents:', error);
     }
-  };
+  }, [params.id, params.propertyId]);
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     try {
       const res = await fetch(`/api/portfolios/${params.id}/properties/${params.propertyId}/notes`);
       if (res.ok) {
@@ -131,9 +120,9 @@ export default function PropertyDetailPage() {
     } catch (error) {
       console.error('Error fetching notes:', error);
     }
-  };
+  }, [params.id, params.propertyId]);
 
-  const fetchProperty = async () => {
+  const fetchProperty = useCallback(async () => {
     try {
       const res = await fetch(`/api/portfolios/${params.id}/properties/${params.propertyId}`);
       if (res.ok) {
@@ -152,7 +141,18 @@ export default function PropertyDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, params.propertyId]);
+
+  useEffect(() => {
+    if (params.id && params.propertyId) {
+      fetchProperty();
+      fetchDocuments();
+      fetchNotes();
+      if (session?.user?.role === 'admin') {
+        fetchApprovals();
+      }
+    }
+  }, [params.id, params.propertyId, session?.user?.role, fetchProperty, fetchDocuments, fetchNotes, fetchApprovals]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1268,7 +1268,7 @@ export default function PropertyDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the property "{property?.name}" and all its associated data.
+              This will permanently delete the property &quot;{property?.name}&quot; and all its associated data.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

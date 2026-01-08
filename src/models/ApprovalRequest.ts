@@ -11,8 +11,8 @@ export interface IApprovalRequest extends Document {
   reviewedBy?: mongoose.Types.ObjectId;
   status: 'pending' | 'approved' | 'rejected';
   comments?: string;
-  originalData?: any;
-  proposedData?: any;
+  originalData?: Record<string, unknown>;
+  proposedData?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }

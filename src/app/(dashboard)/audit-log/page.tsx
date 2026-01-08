@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
 import { FileText, User, Calendar, Filter, X } from 'lucide-react';
 import {
   Table,
@@ -18,11 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { IAuditLog } from '@/types';
 
 export default function AuditLogPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<IAuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [showingToday, setShowingToday] = useState(false);
   
@@ -34,21 +34,7 @@ export default function AuditLogPage() {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    if (session?.user?.role !== 'admin') {
-      router.push('/dashboard');
-      return;
-    }
-    
-    // Check if filtering for today
-    const urlParams = new URLSearchParams(window.location.search);
-    const filterToday = urlParams.get('today') === 'true';
-    setShowingToday(filterToday);
-    
-    fetchLogs();
-  }, [session, router, filterAction, filterEntity, filterUser, filterDateFrom, filterDateTo]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       // Check if coming from "Approved Today" card via URL params
       const urlParams = new URLSearchParams(window.location.search);
@@ -86,7 +72,21 @@ export default function AuditLogPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterAction, filterEntity, filterUser, filterDateFrom, filterDateTo]);
+
+  useEffect(() => {
+    if (session?.user?.role !== 'admin') {
+      router.push('/dashboard');
+      return;
+    }
+    
+    // Check if filtering for today
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterToday = urlParams.get('today') === 'true';
+    setShowingToday(filterToday);
+    
+    fetchLogs();
+  }, [session, router, fetchLogs]);
 
   const clearFilters = () => {
     setFilterAction('');
@@ -304,14 +304,14 @@ export default function AuditLogPage() {
                         <div className="text-sm text-gray-600">
                           {log.changes?.after && (
                             <div className="space-y-1">
-                              {log.changes.after.name && (
-                                <div><span className="font-medium">Name:</span> {log.changes.after.name}</div>
+                              {(log.changes.after as { name?: string })?.name && (
+                                <div><span className="font-medium">Name:</span> {String((log.changes.after as { name?: string }).name)}</div>
                               )}
-                              {log.changes.after.category && (
-                                <div><span className="font-medium">Category:</span> {log.changes.after.category}</div>
+                              {(log.changes.after as { category?: string })?.category && (
+                                <div><span className="font-medium">Category:</span> {String((log.changes.after as { category?: string }).category)}</div>
                               )}
-                              {log.changes.after.value && (
-                                <div><span className="font-medium">Value:</span> {log.changes.after.value}</div>
+                              {(log.changes.after as { value?: string | number })?.value && (
+                                <div><span className="font-medium">Value:</span> {String((log.changes.after as { value?: string | number }).value)}</div>
                               )}
                             </div>
                           )}

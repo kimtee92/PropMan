@@ -4,7 +4,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Building, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import connectDB from '@/lib/db';
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           Welcome back, {session.user.name}!
         </h1>
         <p className="text-sm sm:text-base text-gray-600 mt-1">
-          Here's an overview of your property portfolio
+          Here&apos;s an overview of your property portfolio
         </p>
       </div>
 

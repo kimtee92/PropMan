@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import Portfolio from '@/models/Portfolio';
-import Property from '@/models/Property';
 import DynamicField from '@/models/DynamicField';
 import ApprovalRequest from '@/models/ApprovalRequest';
 

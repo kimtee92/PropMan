@@ -4,9 +4,12 @@ import ApprovalRequest from '@/models/ApprovalRequest';
 import DynamicField from '@/models/DynamicField';
 import Document from '@/models/Document';
 import Property from '@/models/Property';
+// These imports are needed for Mongoose populate to work
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Portfolio from '@/models/Portfolio';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import User from '@/models/User';
-import { requireAuth, requireRole, createAuditLog } from '@/lib/server-utils';
+import { requireRole, createAuditLog } from '@/lib/server-utils';
 import { deleteFileFromUploadThing } from '@/lib/uploadthing-delete';
 
 // GET /api/approvals - List all pending approvals (admin only)

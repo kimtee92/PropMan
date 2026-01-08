@@ -5,7 +5,7 @@ import { requireAuth, createAuditLog } from '@/lib/server-utils';
 import mongoose from 'mongoose';
 
 // GET all portfolios for current user
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const user = await requireAuth();
     await connectDB();

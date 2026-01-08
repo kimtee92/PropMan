@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Plus, Building2, Users, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { PropertyCard } from '@/components/PropertyCard';
@@ -26,18 +26,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { IPortfolio, IProperty, IUser, IUserRef } from '@/types';
 
 export default function PortfolioDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { data: session } = useSession();
-  const [portfolio, setPortfolio] = useState<any>(null);
-  const [properties, setProperties] = useState<any[]>([]);
+  const [portfolio, setPortfolio] = useState<IPortfolio | null>(null);
+  const [properties, setProperties] = useState<IProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<IUser[]>([]);
   const [selectedUser, setSelectedUser] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -46,15 +46,7 @@ export default function PortfolioDetailPage() {
     status: 'active',
   });
 
-  useEffect(() => {
-    if (params.id) {
-      fetchPortfolio();
-      fetchProperties();
-      fetchUsers();
-    }
-  }, [params.id]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch('/api/users');
       if (res.ok) {
@@ -64,9 +56,9 @@ export default function PortfolioDetailPage() {
     } catch (error) {
       console.error('Error fetching users:', error);
     }
-  };
+  }, []);
 
-  const fetchPortfolio = async () => {
+  const fetchPortfolio = useCallback(async () => {
     try {
       const res = await fetch(`/api/portfolios/${params.id}`);
       if (res.ok) {
@@ -76,9 +68,9 @@ export default function PortfolioDetailPage() {
     } catch (error) {
       console.error('Error fetching portfolio:', error);
     }
-  };
+  }, [params.id]);
 
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async () => {
     try {
       const res = await fetch(`/api/portfolios/${params.id}/properties`);
       if (res.ok) {
@@ -90,7 +82,15 @@ export default function PortfolioDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchPortfolio();
+      fetchProperties();
+      fetchUsers();
+    }
+  }, [params.id, fetchPortfolio, fetchProperties, fetchUsers]);
 
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,23 +133,28 @@ export default function PortfolioDetailPage() {
         return;
       }
 
-      const updatedPortfolio = { ...portfolio };
+      const updatedPortfolio = { 
+        ...portfolio,
+        owners: portfolio?.owners || [],
+        managers: portfolio?.managers || [],
+        viewers: portfolio?.viewers || [],
+      };
       
       // Add user to the appropriate array based on their role
       if (user.role === 'admin') {
         // Admins become owners
-        if (!updatedPortfolio.owners.find((o: any) => o._id === selectedUser)) {
-          updatedPortfolio.owners.push(selectedUser);
+        if (!updatedPortfolio.owners.find((o: IUserRef) => o._id === selectedUser)) {
+          updatedPortfolio.owners.push({ _id: selectedUser, name: user.name, email: user.email });
         }
       } else if (user.role === 'manager') {
         // Managers go to managers array
-        if (!updatedPortfolio.managers.find((m: any) => m._id === selectedUser)) {
-          updatedPortfolio.managers.push(selectedUser);
+        if (!updatedPortfolio.managers.find((m: IUserRef) => m._id === selectedUser)) {
+          updatedPortfolio.managers.push({ _id: selectedUser, name: user.name, email: user.email });
         }
       } else if (user.role === 'viewer') {
         // Viewers go to viewers array
-        if (!updatedPortfolio.viewers.find((v: any) => v._id === selectedUser)) {
-          updatedPortfolio.viewers.push(selectedUser);
+        if (!updatedPortfolio.viewers.find((v: IUserRef) => v._id === selectedUser)) {
+          updatedPortfolio.viewers.push({ _id: selectedUser, name: user.name, email: user.email });
         }
       }
 
@@ -157,9 +162,9 @@ export default function PortfolioDetailPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          owners: updatedPortfolio.owners.map((o: any) => o._id || o),
-          managers: updatedPortfolio.managers.map((m: any) => m._id || m),
-          viewers: updatedPortfolio.viewers.map((v: any) => v._id || v),
+          owners: updatedPortfolio.owners.map((o: IUserRef) => o._id || o),
+          managers: updatedPortfolio.managers.map((m: IUserRef) => m._id || m),
+          viewers: updatedPortfolio.viewers.map((v: IUserRef) => v._id || v),
         }),
       });
 

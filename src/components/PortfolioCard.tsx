@@ -6,14 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Button } from './ui/button';
 import { Building, Users, FileText, Trash2 } from 'lucide-react';
 
+import { IUserRef } from '@/types';
+
 interface Portfolio {
   _id: string;
   name: string;
   entity: string;
   description?: string;
-  managers?: any[];
-  owners?: any[];
-  viewers?: any[];
+  managers?: IUserRef[];
+  owners?: IUserRef[];
+  viewers?: IUserRef[];
 }
 
 interface PortfolioCardProps {
@@ -33,7 +35,7 @@ export function PortfolioCard({ portfolio, onEdit, onDelete, isAdmin }: Portfoli
   
   // Get unique users by ID
   const uniqueMemberIds = new Set(
-    allMembers.map((member: any) => 
+    allMembers.map((member: IUserRef | string) => 
       typeof member === 'string' ? member : member._id?.toString() || member.toString()
     )
   );

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,13 +17,14 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { IApprovalRequest } from '@/types';
 
 export default function ApprovalsPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [approvals, setApprovals] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<IApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedApproval, setSelectedApproval] = useState<any>(null);
+  const [selectedApproval, setSelectedApproval] = useState<IApprovalRequest | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [comments, setComments] = useState('');
@@ -88,7 +89,7 @@ export default function ApprovalsPage() {
     }
   };
 
-  const openDialog = (approval: any, actionType: 'approve' | 'reject') => {
+  const openDialog = (approval: IApprovalRequest, actionType: 'approve' | 'reject') => {
     setSelectedApproval(approval);
     setAction(actionType);
     setDialogOpen(true);
@@ -164,7 +165,7 @@ export default function ApprovalsPage() {
                     </div>
                     <CardDescription>
                       Submitted by {approval.submittedBy?.name || 'Unknown'} on{' '}
-                      {new Date(approval.createdAt).toLocaleDateString()}
+                      {approval.createdAt ? new Date(approval.createdAt).toLocaleDateString() : 'Unknown date'}
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
@@ -216,7 +217,7 @@ export default function ApprovalsPage() {
                           
                           // Format value
                           let formattedValue = value;
-                          if (key === 'value' && approval.proposedData.type === 'currency') {
+                          if (key === 'value' && approval.proposedData?.type === 'currency') {
                             formattedValue = `$${parseFloat(value as string).toLocaleString()}`;
                           } else if (key === 'frequency' || key === 'category' || key === 'type' || key === 'status') {
                             formattedValue = String(value).charAt(0).toUpperCase() + String(value).slice(1);
@@ -251,7 +252,7 @@ export default function ApprovalsPage() {
                           
                           // Format value
                           let formattedValue = value;
-                          if (key === 'value' && approval.originalData.type === 'currency') {
+                          if (key === 'value' && approval.originalData?.type === 'currency') {
                             formattedValue = `$${parseFloat(value as string).toLocaleString()}`;
                           } else if (key === 'frequency' || key === 'category' || key === 'type' || key === 'status') {
                             formattedValue = String(value).charAt(0).toUpperCase() + String(value).slice(1);

@@ -5,7 +5,7 @@ import { requireAuth, createAuditLog } from '@/lib/server-utils';
 import bcrypt from 'bcryptjs';
 
 // GET all users (for admin/owners to assign roles)
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const user = await requireAuth();
     await connectDB();

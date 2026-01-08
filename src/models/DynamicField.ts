@@ -9,7 +9,7 @@ export interface IDynamicField extends Document {
   type: 'number' | 'text' | 'currency' | 'date';
   frequency: 'one-time' | 'weekly' | 'monthly' | 'quarterly' | 'annually' | 'yearly';
   currency?: string;
-  value: any;
+  value: string | number;
   status: 'approved' | 'pending' | 'rejected';
   createdBy: mongoose.Types.ObjectId;
   approvedBy?: mongoose.Types.ObjectId;

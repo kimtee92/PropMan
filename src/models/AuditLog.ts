@@ -7,8 +7,8 @@ export interface IAuditLog extends Document {
   targetType: 'property' | 'field' | 'document' | 'portfolio' | 'user';
   targetId: mongoose.Types.ObjectId;
   changes: {
-    before?: any;
-    after?: any;
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
   };
   ipAddress?: string;
   userAgent?: string;

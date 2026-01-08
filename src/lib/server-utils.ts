@@ -34,8 +34,8 @@ export async function createAuditLog(data: {
   targetType: 'property' | 'field' | 'document' | 'portfolio' | 'user';
   targetId: string;
   changes?: {
-    before?: any;
-    after?: any;
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
   };
   ipAddress?: string;
   userAgent?: string;
