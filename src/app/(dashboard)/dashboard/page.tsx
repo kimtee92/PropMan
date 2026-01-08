@@ -1,5 +1,6 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
+import { unstable_noStore as noStore } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import ApprovalRequest from '@/models/ApprovalRequest';
 import mongoose from 'mongoose';
 
 export default async function DashboardPage() {
+  noStore();
   const session = await getServerSession(authOptions);
 
   if (!session) {

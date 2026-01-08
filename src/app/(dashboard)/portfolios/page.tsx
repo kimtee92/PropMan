@@ -16,6 +16,16 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function PortfoliosPage() {
   const { data: session } = useSession();
@@ -28,6 +38,10 @@ export default function PortfoliosPage() {
     entity: '',
     description: '',
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [portfolioToDelete, setPortfolioToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     fetchPortfolios();
@@ -65,6 +79,48 @@ export default function PortfoliosPage() {
       console.error('Error creating portfolio:', error);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteDialogChange = (openState: boolean) => {
+    setDeleteDialogOpen(openState);
+    if (!openState) {
+      setPortfolioToDelete(null);
+      setDeleteError('');
+      setDeleting(false);
+    }
+  };
+
+  const confirmDeletePortfolio = (portfolio: any) => {
+    setPortfolioToDelete(portfolio);
+    setDeleteError('');
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeletePortfolio = async () => {
+    if (!portfolioToDelete) return;
+    setDeleting(true);
+
+    try {
+      const res = await fetch(`/api/portfolios/${portfolioToDelete._id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setDeleteError(data.error || 'Failed to delete portfolio');
+        return;
+      }
+
+      setDeleteDialogOpen(false);
+      setPortfolioToDelete(null);
+      setDeleteError('');
+      fetchPortfolios();
+    } catch (error) {
+      console.error('Error deleting portfolio:', error);
+      setDeleteError('An unexpected error occurred while deleting the portfolio.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -162,9 +218,42 @@ export default function PortfoliosPage() {
               key={portfolio._id}
               portfolio={portfolio}
               isAdmin={session?.user?.role === 'admin'}
+              onDelete={session?.user?.role === 'admin' ? confirmDeletePortfolio : undefined}
             />
           ))}
         </div>
+      )}
+
+      {session?.user?.role === 'admin' && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={handleDeleteDialogChange}>
+          <AlertDialogContent className="mx-3 sm:mx-0">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete portfolio?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. The portfolio{' '}
+                <span className="font-medium text-gray-900">
+                  {portfolioToDelete?.name ?? 'this portfolio'}
+                </span>{' '}
+                will be permanently removed once deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {deleteError && (
+              <p className="text-sm text-red-600" role="alert">
+                {deleteError}
+              </p>
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeletePortfolio}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Building, Users, FileText } from 'lucide-react';
+import { Building, Users, FileText, Trash2 } from 'lucide-react';
 
 interface Portfolio {
   _id: string;
@@ -19,7 +19,7 @@ interface Portfolio {
 interface PortfolioCardProps {
   portfolio: Portfolio;
   onEdit?: (portfolio: Portfolio) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (portfolio: Portfolio) => void;
   isAdmin?: boolean;
 }
 
@@ -65,7 +65,7 @@ export function PortfolioCard({ portfolio, onEdit, onDelete, isAdmin }: Portfoli
               <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
             </div>
           </div>
-          <div className="flex space-x-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Link href={`/portfolio/${portfolio._id}`} className="flex-1 sm:flex-none">
               <Button size="sm" variant="outline" className="w-full">
                 <FileText className="h-4 w-4 sm:mr-1" />
@@ -75,6 +75,17 @@ export function PortfolioCard({ portfolio, onEdit, onDelete, isAdmin }: Portfoli
             {isAdmin && onEdit && (
               <Button size="sm" variant="outline" onClick={() => onEdit(portfolio)} className="flex-1 sm:flex-none">
                 Edit
+              </Button>
+            )}
+            {isAdmin && onDelete && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onDelete(portfolio)}
+                className="flex-1 sm:flex-none"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
               </Button>
             )}
           </div>
