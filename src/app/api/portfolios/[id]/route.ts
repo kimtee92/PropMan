@@ -19,7 +19,7 @@ export async function GET(
       .populate('managers', 'name email')
       .populate('viewers', 'name email');
 
-    if (!portfolio) {
+    if (!portfolio || portfolio.isDeleted) {
       return NextResponse.json(
         { error: 'Portfolio not found' },
         { status: 404 }
@@ -61,7 +61,7 @@ export async function PUT(
     await connectDB();
 
     const portfolio = await Portfolio.findById(params.id);
-    if (!portfolio) {
+    if (!portfolio || portfolio.isDeleted) {
       return NextResponse.json(
         { error: 'Portfolio not found' },
         { status: 404 }
@@ -145,14 +145,18 @@ export async function DELETE(
       );
     }
 
-    // Check if portfolio has properties
-    const propertyCount = await Property.countDocuments({ portfolioId: params.id });
-    if (propertyCount > 0) {
+    if (portfolio.isDeleted) {
       return NextResponse.json(
-        { error: 'Cannot delete portfolio with existing properties' },
+        { error: 'Portfolio is already deleted' },
         { status: 400 }
       );
     }
+
+    // Soft delete the portfolio
+    portfolio.isDeleted = true;
+    portfolio.deletedAt = new Date();
+    portfolio.deletedBy = new mongoose.Types.ObjectId(user.id);
+    await portfolio.save();
 
     await createAuditLog({
       userId: user.id,
@@ -160,11 +164,10 @@ export async function DELETE(
       targetType: 'portfolio',
       targetId: portfolio._id.toString(),
       changes: {
-        before: portfolio.toObject(),
+        before: { isDeleted: false },
+        after: { isDeleted: true, deletedAt: portfolio.deletedAt },
       },
     });
-
-    await Portfolio.findByIdAndDelete(params.id);
 
     return NextResponse.json(
       { message: 'Portfolio deleted successfully' },

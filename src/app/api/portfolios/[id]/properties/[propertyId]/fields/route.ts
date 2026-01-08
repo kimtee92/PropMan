@@ -29,7 +29,7 @@ export async function POST(
 
     // Get portfolio and property
     const portfolio = await Portfolio.findById(params.id);
-    if (!portfolio) {
+    if (!portfolio || portfolio.isDeleted) {
       return NextResponse.json({ error: 'Portfolio not found' }, { status: 404 });
     }
 

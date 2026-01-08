@@ -26,12 +26,13 @@ export default async function DashboardPage() {
   // Count portfolios based on user role and access
   let portfolioCount = 0;
   if (session.user.role === 'admin') {
-    // Admins see all portfolios
-    portfolioCount = await Portfolio.countDocuments();
+    // Admins see all portfolios (excluding deleted)
+    portfolioCount = await Portfolio.countDocuments({ isDeleted: { $ne: true } });
   } else {
-    // Managers and viewers see only portfolios they have access to
+    // Managers and viewers see only portfolios they have access to (excluding deleted)
     const userId = new mongoose.Types.ObjectId(session.user.id);
     portfolioCount = await Portfolio.countDocuments({
+      isDeleted: { $ne: true },
       $or: [
         { owners: userId },
         { managers: userId },

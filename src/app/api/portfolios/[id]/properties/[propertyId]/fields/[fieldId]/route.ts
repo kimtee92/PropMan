@@ -20,7 +20,7 @@ export async function DELETE(
 
     // Get portfolio and field
     const portfolio = await Portfolio.findById(params.id);
-    if (!portfolio) {
+    if (!portfolio || portfolio.isDeleted) {
       return NextResponse.json({ error: 'Portfolio not found' }, { status: 404 });
     }
 

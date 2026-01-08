@@ -9,6 +9,9 @@ export interface IPortfolio extends Document {
   managers: mongoose.Types.ObjectId[];
   viewers: mongoose.Types.ObjectId[];
   defaultFields: mongoose.Types.ObjectId[];
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +47,17 @@ const PortfolioSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'FieldTemplate',
   }],
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedAt: {
+    type: Date,
+  },
+  deletedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
 }, {
   timestamps: true,
 });
@@ -53,5 +67,6 @@ PortfolioSchema.index({ name: 1 });
 PortfolioSchema.index({ entity: 1 });
 PortfolioSchema.index({ owners: 1 });
 PortfolioSchema.index({ managers: 1 });
+PortfolioSchema.index({ isDeleted: 1 });
 
 export default mongoose.models.Portfolio || mongoose.model<IPortfolio>('Portfolio', PortfolioSchema);
