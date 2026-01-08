@@ -19,7 +19,7 @@ export async function GET(
 
     // Check portfolio access first
     const portfolio = await Portfolio.findById(params.id);
-    if (!portfolio) {
+    if (!portfolio || portfolio.isDeleted) {
       return NextResponse.json(
         { error: 'Portfolio not found' },
         { status: 404 }
@@ -88,7 +88,7 @@ export async function PUT(
 
     // Check portfolio access
     const portfolio = await Portfolio.findById(params.id);
-    if (!portfolio) {
+    if (!portfolio || portfolio.isDeleted) {
       return NextResponse.json(
         { error: 'Portfolio not found' },
         { status: 404 }
@@ -218,7 +218,7 @@ export async function DELETE(
 
     // Check portfolio access
     const portfolio = await Portfolio.findById(params.id);
-    if (!portfolio) {
+    if (!portfolio || portfolio.isDeleted) {
       return NextResponse.json(
         { error: 'Portfolio not found' },
         { status: 404 }

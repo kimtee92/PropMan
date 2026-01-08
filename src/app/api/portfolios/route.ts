@@ -14,19 +14,21 @@ export async function GET(request: Request) {
 
     // Filter based on role
     if (user.role === 'admin') {
-      // Admins see all portfolios
-      query = {};
+      // Admins see all portfolios except deleted ones
+      query = { isDeleted: { $ne: true } };
     } else if (user.role === 'manager') {
-      // Managers see portfolios they manage
+      // Managers see portfolios they manage (excluding deleted)
       query = {
+        isDeleted: { $ne: true },
         $or: [
           { managers: new mongoose.Types.ObjectId(user.id) },
           { owners: new mongoose.Types.ObjectId(user.id) },
         ],
       };
     } else {
-      // Viewers see portfolios they have access to
+      // Viewers see portfolios they have access to (excluding deleted)
       query = {
+        isDeleted: { $ne: true },
         $or: [
           { viewers: new mongoose.Types.ObjectId(user.id) },
           { managers: new mongoose.Types.ObjectId(user.id) },
