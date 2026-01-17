@@ -5,9 +5,11 @@ import { authOptions } from '@/lib/auth';
 const f = createUploadthing();
 
 export const ourFileRouter = {
+  // Note: UploadThing free tier limits files to 4MB max
+  // Upgrade your plan at uploadthing.com for larger files
   propertyDocument: f({
-    pdf: { maxFileSize: '8MB', maxFileCount: 10 },
-    image: { maxFileSize: '4MB', maxFileCount: 10 },
+    pdf: { maxFileSize: '16MB', maxFileCount: 10 },
+    image: { maxFileSize: '8MB', maxFileCount: 10 },
     'text/plain': { maxFileSize: '2MB', maxFileCount: 5 },
     'application/vnd.ms-excel': { maxFileSize: '4MB', maxFileCount: 5 },
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { maxFileSize: '4MB', maxFileCount: 5 },
